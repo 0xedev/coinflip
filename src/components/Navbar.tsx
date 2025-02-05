@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Coins, Plus } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { Coins, Plus } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const [ethPrice, setEthPrice] = useState<number | null>(null);
@@ -8,11 +8,13 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const fetchEthPrice = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+        );
         const data = await response.json();
         setEthPrice(data.ethereum.usd);
       } catch (error) {
-        console.error('Error fetching ETH price:', error);
+        console.error("Error fetching ETH price:", error);
       } finally {
         setLoading(false);
       }
@@ -32,7 +34,7 @@ const Navbar: React.FC = () => {
             <div className="flex items-center gap-3 group cursor-pointer">
               <Coins className="w-8 h-8 text-yellow-500 transition-transform group-hover:rotate-12" />
               <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-yellow-300 bg-clip-text text-transparent">
-                PVP Flip
+                Coin Flip
               </h1>
             </div>
           </div>
@@ -51,13 +53,12 @@ const Navbar: React.FC = () => {
                     <div className="animate-pulse">Loading...</div>
                   ) : (
                     <span>
-                      {ethPrice 
-                        ? `$${ethPrice.toLocaleString(undefined, { 
+                      {ethPrice
+                        ? `$${ethPrice.toLocaleString(undefined, {
                             minimumFractionDigits: 2,
-                            maximumFractionDigits: 2 
+                            maximumFractionDigits: 2,
                           })}`
-                        : 'Failed to load'
-                      }
+                        : "Failed to load"}
                     </span>
                   )}
                 </span>
@@ -69,14 +70,12 @@ const Navbar: React.FC = () => {
 
           {/* Connect Button Section */}
           <div className="flex items-center">
-            <appkit-button 
-            size='sm'
-            balance='hide' />
+            <appkit-button size="sm" balance="hide" />
           </div>
         </div>
       </div>
     </nav>
   );
-}
+};
 
 export default Navbar;

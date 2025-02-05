@@ -1,5 +1,12 @@
-import { useEffect, useState } from 'react';
-import { getGameDetails, getGameIdCounter, joinGame, getTimeLeftToExpire, resolveGame, claimReward } from '../utils/contractFunction';
+import { useEffect, useState } from "react";
+import {
+  getGameDetails,
+  getGameIdCounter,
+  joinGame,
+  getTimeLeftToExpire,
+  resolveGame,
+  claimReward,
+} from "../utils/contractFunction";
 import {
   GamepadIcon,
   Trophy,
@@ -7,7 +14,7 @@ import {
   XCircle,
   ArrowRight,
   CircleDollarSign,
-} from 'lucide-react';
+} from "lucide-react";
 
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center h-64 gap-8">
@@ -37,10 +44,10 @@ const Available = () => {
     const fetchGameDetails = async () => {
       try {
         const gameIdCounter = await getGameIdCounter();
-        console.log('Game ID Counter:', gameIdCounter);
+        console.log("Game ID Counter:", gameIdCounter);
 
         if (gameIdCounter === undefined) {
-          setError('No active games available.');
+          setError("No active games available.");
           return;
         }
 
@@ -57,9 +64,10 @@ const Available = () => {
           (game) =>
             !game.isCompleted &&
             game.timeLeft &&
-            (game.timeLeft.hours * 3600 +
+            game.timeLeft.hours * 3600 +
               game.timeLeft.minutes * 60 +
-              game.timeLeft.seconds) > 0
+              game.timeLeft.seconds >
+              0
         );
 
         // Sort games by descending order of gameId
@@ -67,8 +75,8 @@ const Available = () => {
 
         setGameDetails(activeGames);
       } catch (error) {
-        console.error('Error fetching games:', error);
-        setError('Error fetching games');
+        console.error("Error fetching games:", error);
+        setError("Error fetching games");
       } finally {
         setLoading(false);
       }
@@ -85,11 +93,11 @@ const Available = () => {
       await joinGame(gameId); // Pass setError to handle errors
       console.log(`Successfully joined game ${gameId}`);
     } catch (err) {
-      console.error('Error joining game:', err);
+      console.error("Error joining game:", err);
       if (err instanceof Error) {
         setError(`Failed to join game: ${err.message}`);
       } else {
-        setError('An unknown error occurred while trying to join the game.');
+        setError("An unknown error occurred while trying to join the game.");
       }
     } finally {
       setLoadingGameId(null); // Reset loading state once done
@@ -102,11 +110,11 @@ const Available = () => {
       await resolveGame(gameId); // Call resolveGame function
       console.log(`Successfully resolved game ${gameId}`);
     } catch (err) {
-      console.error('Error resolving game:', err);
+      console.error("Error resolving game:", err);
       if (err instanceof Error) {
         setError(`Failed to resolve game: ${err.message}`);
       } else {
-        setError('Failed to resolve game: An unknown error occurred.');
+        setError("Failed to resolve game: An unknown error occurred.");
       }
     }
   };
@@ -117,11 +125,11 @@ const Available = () => {
       await claimReward(gameId); // Call claimReward function
       console.log(`Successfully claimed reward for game ${gameId}`);
     } catch (err) {
-      console.error('Error claiming reward:', err);
+      console.error("Error claiming reward:", err);
       if (err instanceof Error) {
         setError(`Failed to claim reward: ${err.message}`);
       } else {
-        setError('Failed to claim reward: An unknown error occurred.');
+        setError("Failed to claim reward: An unknown error occurred.");
       }
     }
   };
@@ -203,7 +211,10 @@ const Available = () => {
                 </thead>
                 <tbody className="divide-y divide-white/10">
                   {currentGames.map((game) => (
-                    <tr key={game.gameId} className="hover:bg-white/5 transition-colors">
+                    <tr
+                      key={game.gameId}
+                      className="hover:bg-white/5 transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Trophy className="w-4 h-4 text-yellow-400" />
@@ -215,42 +226,48 @@ const Available = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Coins className="w-4 h-4 text-purple-400" />
-                          <span className="text-white/90">{game.betAmount}</span>
+                          <span className="text-white/90">
+                            {game.betAmount}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-white/90">
-                          {game.tokenName || 'Unknown'}
+                          {game.tokenName || "Unknown"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-white/90">
-                          {game.isCompleted ? 'Yes' : 'No'}
+                          {game.isCompleted ? "Yes" : "No"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-white/90">
-                          {game.player1Choice ? 'Heads' : 'Tails'}
+                          {game.player1Choice ? "Heads" : "Tails"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-white/90">
                           {game.timeLeft
                             ? `${game.timeLeft.hours}h ${game.timeLeft.minutes}m ${game.timeLeft.seconds}s`
-                            : 'Expired'}
+                            : "Expired"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => handleJoinGame(game.gameId)}
-                            disabled={game.isCompleted || game.timeLeft <= 0 || loadingGameId === game.gameId}
+                            disabled={
+                              game.isCompleted ||
+                              game.timeLeft <= 0 ||
+                              loadingGameId === game.gameId
+                            }
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                               game.isCompleted
-                                ? 'bg-gray-500 cursor-not-allowed opacity-50'
+                                ? "bg-gray-500 cursor-not-allowed opacity-50"
                                 : game.timeLeft <= 0
-                                ? 'bg-red-500 cursor-not-allowed opacity-50'
-                                : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 text-white font-medium'
+                                ? "bg-red-500 cursor-not-allowed opacity-50"
+                                : "bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 text-white font-medium"
                             }`}
                           >
                             {loadingGameId === game.gameId ? (
@@ -269,12 +286,12 @@ const Available = () => {
                               onClick={() => handleResolveGame(game.gameId)}
                               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-all ${
                                 game.isCompleted
-                                  ? 'bg-gray-500 cursor-not-allowed opacity-50'
-                                  : 'bg-gradient-to-r from-green-400 to-blue-500 hover:bg-gradient-to-r hover:from-blue-500 hover:to-green-500'
+                                  ? "bg-gray-500 cursor-not-allowed opacity-50"
+                                  : "bg-gradient-to-r from-green-400 to-blue-500 hover:bg-gradient-to-r hover:from-blue-500 hover:to-green-500"
                               }`}
                               disabled={game.isCompleted}
                             >
-                              Resolve Game
+                              Flip
                             </button>
                           )}
 
