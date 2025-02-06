@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { getGameState, hasPlayerWithdrawn, getGameIdCounter } from '../utils/contractFunction'; // Import the functions from FlipGame.ts
+import React, { useState, useEffect } from "react";
 import {
-  GamepadIcon,
-  Trophy,
-  Coins,
-  XCircle,
-  
-} from 'lucide-react';
+  getGameState,
+  hasPlayerWithdrawn,
+  getGameIdCounter,
+} from "../utils/contractFunction"; // Import the functions from FlipGame.ts
+import { GamepadIcon, Trophy, Coins, XCircle } from "lucide-react";
 
 const GetGameState = () => {
   const [gameId] = useState<number>(1); // Example gameId
   const [gameStates, setGameStates] = useState<any[]>([]); // Array to hold multiple game states
-  const [playerAddress, setPlayerAddress] = useState<string>(''); // The address of the player (this should be connected wallet)
-  const [hasWithdrawnState, setHasWithdrawnState] = useState<boolean | null>(null);
+  const [playerAddress, setPlayerAddress] = useState<string>(""); // The address of the player (this should be connected wallet)
+  const [hasWithdrawnState, setHasWithdrawnState] = useState<boolean | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGameStates = async () => {
       try {
         const gameIdCounter = await getGameIdCounter();
-        console.log('Game ID Counter:', gameIdCounter);
+        console.log("Game ID Counter:", gameIdCounter);
 
         if (gameIdCounter === undefined || gameIdCounter === 0) {
           return;
@@ -33,14 +33,13 @@ const GetGameState = () => {
         );
         setGameStates(states);
       } catch (error) {
-        console.error('Error fetching game states:', error);
-        setError('Failed to fetch game states');
+        console.error("Error fetching game states:", error);
+        setError("Failed to fetch game states");
       }
     };
 
     fetchGameStates();
   }, []);
-
 
   const checkWithdrawnStatus = async () => {
     if (playerAddress) {
@@ -48,18 +47,19 @@ const GetGameState = () => {
         const hasWithdrawn = await hasPlayerWithdrawn(gameId, playerAddress);
         setHasWithdrawnState(hasWithdrawn);
       } catch (error) {
-        console.error('Error checking withdrawn status:', error);
-        setError('Failed to check withdrawal status');
+        console.error("Error checking withdrawn status:", error);
+        setError("Failed to check withdrawal status");
       }
     } else {
-      setError('Please connect a wallet address');
+      setError("Please connect a wallet address");
     }
   };
 
-  const handlePlayerAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePlayerAddressChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setPlayerAddress(event.target.value);
   };
-
 
   return (
     <div className="p-6">
@@ -82,7 +82,8 @@ const GetGameState = () => {
               No Available Games
             </h3>
             <p className="text-white/70">
-              There are currently no active games to join. Check back later or create a game.
+              There are currently no active games to join. Check back later or
+              create a game.
             </p>
           </div>
         ) : (
@@ -104,12 +105,6 @@ const GetGameState = () => {
                       Betamount
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      TokenAddress
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      State
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Winner
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
@@ -119,7 +114,10 @@ const GetGameState = () => {
                 </thead>
                 <tbody className="divide-y divide-white/10">
                   {gameStates.map((state) => (
-                    <tr key={state.gameId} className="hover:bg-white/5 transition-colors">
+                    <tr
+                      key={state.gameId}
+                      className="hover:bg-white/5 transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Trophy className="w-4 h-4 text-yellow-400" />
@@ -136,33 +134,26 @@ const GetGameState = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-white/90">
-                          {state.player2 || 'Not joined yet'}
+                          {state.player2 || "Not joined yet"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {state.betAmount}
-                        </span>
+                        <span className="text-white/90">{state.betAmount}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-white/90">
-                          {state.tokenAddress}
+                          {state.winner
+                            ? state.winner === state.player1
+                              ? "Player 1"
+                              : state.winner === state.player2
+                              ? "Player 2"
+                              : "Unknown"
+                            : "Not resolved yet"}
                         </span>
                       </td>
+
                       <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {state.state}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {state.winner || 'Not resolved yet'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {state.winAmount}
-                        </span>
+                        <span className="text-white/90">{state.winAmount}</span>
                       </td>
                     </tr>
                   ))}
@@ -171,31 +162,6 @@ const GetGameState = () => {
             </div>
           </div>
         )}
-
-        {/* Input for Player Address */}
-        <div>
-          <label htmlFor="playerAddress">Player Address: </label>
-          <input
-            type="text"
-            id="playerAddress"
-            value={playerAddress}
-            onChange={handlePlayerAddressChange}
-          />
-        </div>
-
-        {/* Check if Player has Withdrawn */}
-        <div>
-          <button onClick={checkWithdrawnStatus}>
-            Check If Player Has Withdrawn
-          </button>
-          {hasWithdrawnState === null ? (
-            <p>Check withdrawn status...</p>
-          ) : hasWithdrawnState ? (
-            <p>Player has withdrawn the reward.</p>
-          ) : (
-            <p>Player has not withdrawn the reward yet.</p>
-          )}
-        </div>
       </div>
     </div>
   );
