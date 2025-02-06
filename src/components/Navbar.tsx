@@ -40,7 +40,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* ETH Price Section */}
-          {/* <div className="flex items-center">
+          <div className="flex items-center">
             <div className="flex items-center gap-3 bg-slate-700/50 rounded-full px-6 py-2.5 border border-slate-600 hover:border-slate-500 transition-colors">
               <div className="flex items-center gap-2">
                 <img
@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
               <div className="h-5 w-px bg-slate-600"></div>
               <Plus className="w-4 h-4 text-slate-400" />
             </div>
-          </div> */}
+          </div>
 
           {/* Connect Button Section */}
           <div className="flex items-center">
