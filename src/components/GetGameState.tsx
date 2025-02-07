@@ -6,7 +6,7 @@ import {
   // getGameDetails,
   getTimeLeftToExpire,
 } from "../utils/contractFunction"; // Import the functions
-import { GamepadIcon, Trophy, Coins, XCircle } from "lucide-react";
+import { GamepadIcon, Trophy, XCircle } from "lucide-react";
 
 const GetGameState = () => {
   const [gameStates, setGameStates] = useState<any[]>([]); // Array to hold past game states
@@ -94,12 +94,7 @@ const GetGameState = () => {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Game ID
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Player1
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Player2
-                    </th>
+
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Betamount
                     </th>
@@ -125,17 +120,7 @@ const GetGameState = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Coins className="w-4 h-4 text-purple-400" />
-                          <span className="text-white/90">{state.player1}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {state.player2 || "Not joined yet"}
-                        </span>
-                      </td>
+
                       <td className="px-6 py-4">
                         <span className="text-white/90">{state.betAmount}</span>
                       </td>
