@@ -200,12 +200,12 @@
 
 // export default GetGameState;
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   getGameState,
-  hasPlayerWithdrawn,
+  // hasPlayerWithdrawn,
   getGameIdCounter,
-  getGameDetails,
+  // getGameDetails,
   getTimeLeftToExpire,
 } from "../utils/contractFunction"; // Import the functions
 import { GamepadIcon, Trophy, Coins, XCircle } from "lucide-react";
@@ -227,7 +227,7 @@ const GetGameState = () => {
         // Fetch all games and filter out active ones (completed or expired games only)
         const states = await Promise.all(
           Array.from({ length: gameIdCounter }, async (_, gameId) => {
-            const gameDetails = await getGameDetails(gameId);
+            // const gameDetails = await getGameDetails(gameId);
             const timeLeft = await getTimeLeftToExpire(gameId); // Get remaining time for expiration
             const state = await getGameState(gameId);
 
