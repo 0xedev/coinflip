@@ -50,6 +50,7 @@ interface GameDetails {
   tokenSymbol: string;
   player2Balance: string;
   player1: string;
+  player2: string;
 }
 
 // Function to handle contract errors with additional info
@@ -461,6 +462,7 @@ export const getGameDetails = async (gameId: number): Promise<GameDetails> => {
       tokenSymbol: tokenSymbol,
       player2Balance: player2BalanceInEther,
       player1: gameDetails.player1,
+      player2: gameDetails.player2,
     };
 
     console.log("game det", gameDetails);
