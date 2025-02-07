@@ -95,13 +95,13 @@ const GetGameState = () => {
                       Game ID
                     </th>
 
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Betamount
-                    </th>
                     {/* <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Winner
+                      Betamount
                     </th> */}
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">
+                      Winner
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">
                       WinAmount
                     </th>
                   </tr>
@@ -121,10 +121,10 @@ const GetGameState = () => {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">{state.betAmount}</span>
-                      </td>
                       {/* <td className="px-6 py-4">
+                        <span className="text-white/90">{state.betAmount}</span>
+                      </td> */}
+                      <td className="px-6 py-4">
                         <span className="text-white/90">
                           {state.winner
                             ? state.winner === state.player1
@@ -134,7 +134,7 @@ const GetGameState = () => {
                               : "Unknown"
                             : "Not resolved yet"}
                         </span>
-                      </td> */}
+                      </td>
                       <td className="px-6 py-4">
                         <span className="text-white/90">{state.winAmount}</span>
                       </td>
