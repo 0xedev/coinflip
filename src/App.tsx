@@ -8,7 +8,7 @@ import GetGameState from "./components/GetGameState";
 import "./App.css";
 import CreateGame from "./components/CreateGame";
 import Available from "./components/Available";
-import MyGamesSection from "./components/MyGames";
+// import MyGamesSection from "./components/MyGames";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +29,7 @@ export function App() {
     <div className=" min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
       <Navbar />
       <CreateGame />
-      <MyGamesSection />
+      {/* <MyGamesSection /> */}
       <Available />
       <div className="container mx-auto px-4 py-8">
         <WagmiProvider config={wagmiAdapter.wagmiConfig}>
