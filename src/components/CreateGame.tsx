@@ -155,9 +155,9 @@ const CreateGame: React.FC = () => {
       }));
 
       // Clear the success message after 5 seconds (5000 milliseconds)
-      setTimeout(() => {
-        setState((prev) => ({ ...prev, success: null }));
-      }, 5000);
+      // setTimeout(() => {
+      //   setState((prev) => ({ ...prev, success: null }));
+      // }, 10000);
 
       // Refresh token balance
       fetchTokenBalance();
