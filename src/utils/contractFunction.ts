@@ -558,3 +558,60 @@ export async function hasPlayerWithdrawn(gameId: number, player: string) {
     throw error;
   }
 }
+
+export const withdrawReward = async (gameId: number) => {
+  try {
+    console.log("Attempting to withdraw reward for game with ID:", gameId);
+
+    // Set up contract with signer
+    const { signer, contract } = await setupContractWithSigner();
+
+    // Fetch game details
+    const game = await contract.games(gameId);
+    console.log("Fetched game details:", game);
+
+    // Ensure the game is still open and has not been completed
+    if (game.state === 3) {
+      // Assuming state '3' corresponds to GameState.COMPLETED
+      console.log(`Game with ID ${gameId} has already been completed.`);
+      alert("Game has already been completed.");
+      return;
+    }
+
+    // Check if the player is Player 1 (the creator of the game)
+    const playerAddress = await signer.getAddress();
+    if (game.player1 !== playerAddress) {
+      console.log(`You are not the creator of this game.`);
+      alert("You are not the creator of this game.");
+      return;
+    }
+
+    // Check if the time elapsed has passed the timeout duration without a Player 2 joining
+    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    const timeElapsed = currentTime - game.createdAt; // Time elapsed since the game was created
+
+    if (timeElapsed < game.timeoutDuration) {
+      console.log(`Not enough time has passed for withdrawal.`);
+      alert(
+        `You can only withdraw after ${game.timeoutDuration} seconds if Player 2 hasn't joined.`
+      );
+      return;
+    }
+
+    // Withdraw Player 1's bet or the game reward
+    const tx = await contract.withdrawReward(gameId);
+    const receipt = await tx.wait();
+    console.log("Transaction sent! Hash:", tx.hash);
+
+    if (receipt.status === 1) {
+      console.log(`Successfully withdrew reward for game with ID: ${gameId}`);
+      alert(`Successfully withdrew reward for game with ID: ${gameId}`);
+    } else {
+      console.log(`Transaction failed for Game ID: ${gameId}`);
+      alert(`Transaction failed for Game ID: ${gameId}`);
+    }
+  } catch (error) {
+    console.error("Error withdrawing reward:", error);
+    alert("An error occurred. Check the console for details.");
+  }
+};

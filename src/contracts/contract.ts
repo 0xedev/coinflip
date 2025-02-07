@@ -174,6 +174,43 @@ export const ABI = [
         type: "address",
       },
     ],
+    name: "GameExpired",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "gameId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "player1",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "player2",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "betAmount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "tokenAddress",
+        type: "address",
+      },
+    ],
     name: "GameJoined",
     type: "event",
   },
@@ -621,7 +658,7 @@ export const ABI = [
 ];
 
 // src/contracts/FlipGameContract.ts
-export const ADDRESS = "0xaC225DAeA5F5494315fcc3a30c496A455A09cF05";
+export const ADDRESS = "0x68F355B8be22371c8Bed37D3ca19934007bB6aC8";
 
 // Supported tokens -
 // 0x07F41412697D14981e770b6E335051b1231A2bA8

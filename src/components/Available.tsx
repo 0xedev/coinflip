@@ -96,7 +96,7 @@ const Available = () => {
     setError(null);
     try {
       console.log(`Joining game ${gameId}...`);
-      await joinGame(gameId); // Pass setError to handle errors
+      await joinGame(gameId); // Call the function to join the game
       console.log(`Successfully joined game ${gameId}`);
     } catch (err) {
       console.error("Error joining game:", err);
@@ -107,6 +107,17 @@ const Available = () => {
       }
     } finally {
       setLoadingGameId(null); // Reset loading state once done
+    }
+
+    {
+      error && (
+        <div className="mb-6 bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400">
+          <p className="flex items-center gap-2">
+            <XCircle className="w-5 h-5" />
+            {error}
+          </p>
+        </div>
+      );
     }
   };
 
@@ -174,6 +185,12 @@ const Available = () => {
           </div>
         )}
 
+        {/* Available Games Section Description */}
+        <div className="mb-6 text-center text-white font-semibold text-2xl">
+          <h2>Available Games</h2>
+          <p className="text-white/70"></p>
+        </div>
+
         {/* Table and other UI */}
         {gameDetails.length === 0 ? (
           <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl p-8 text-center">
@@ -205,7 +222,7 @@ const Available = () => {
                       Game Completed
                     </th> */}
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      player1Choice
+                      P1
                     </th>
                     {/* <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Time
@@ -245,7 +262,7 @@ const Available = () => {
 
                       <td className="px-6 py-4">
                         <span className="text-white/90">
-                          {game.player1Choice ? "Heads" : "Tails"}
+                          {game.P1 ? "Heads" : "Tails"}
                         </span>
                       </td>
 
@@ -267,7 +284,7 @@ const Available = () => {
                             }`}
                           >
                             {loadingGameId === game.gameId ? (
-                              <span className="spinner-border spinner-border-sm"></span>
+                              <span className="spinner-border spinner-border-sm"></span> // Show spinner while loading
                             ) : (
                               <>
                                 <ArrowRight className="w-4 h-4" />
