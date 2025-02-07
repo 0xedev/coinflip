@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAppKitAccount } from "@reown/appkit/react";
+import { createGame, SUPPORTED_TOKENS } from "../utils/contractFunction";
 import {
-  useAppKitAccount
-   } from '@reown/appkit/react'
-import { createGame, SUPPORTED_TOKENS } from '../utils/contractFunction';
-import { Coins, Loader2, Plus, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+  Coins,
+  Loader2,
+  Plus,
+  AlertCircle,
+  CheckCircle2,
+  Info,
+} from "lucide-react";
 
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
+import { publicProvider, fallbackProvider } from "../utils/contractFunction";
 
 interface CreateGameState {
   player1Choice: boolean;
@@ -20,52 +26,76 @@ interface CreateGameState {
 }
 
 const CreateGame: React.FC = () => {
-   const {address, isConnected} = useAppKitAccount();
+  const { address, isConnected } = useAppKitAccount();
   const [state, setState] = useState<CreateGameState>({
     player1Choice: false,
-    timeoutDuration: '3600', // Default 1 hour in seconds
-    betAmount: '',
+    timeoutDuration: "3600", // Default 1 hour in seconds
+    betAmount: "",
     tokenAddress: SUPPORTED_TOKENS.STABLEAI,
     loading: false,
     error: null,
     success: null,
-    tokenBalance: '0',
-    tokenSymbol: 'STABLEAI'
+    tokenBalance: "0",
+    tokenSymbol: "STABLEAI",
   });
-
 
   const fetchTokenBalance = useCallback(async () => {
     if (!address || !state.tokenAddress || !isConnected) return;
 
-    console.log('Fetching token balance for address:', address);
+    console.log("Fetching token balance for address:", address);
+
+    const tokenAbi = [
+      "function balanceOf(address owner) view returns (uint256)",
+      "function symbol() view returns (string)",
+    ];
 
     try {
-      const provider = new ethers.JsonRpcProvider('https://base-mainnet.infura.io/v3/b17a040a14bc48cfb3928a73d26f3617');
+      // Attempt with primary provider first
       const tokenContract = new ethers.Contract(
         state.tokenAddress,
-        [
-          'function balanceOf(address owner) view returns (uint256)',
-          'function symbol() view returns (string)'
-        ],
-        provider
+        tokenAbi,
+        publicProvider
       );
-
       const [balance, symbol] = await Promise.all([
         tokenContract.balanceOf(address),
-        tokenContract.symbol()
+        tokenContract.symbol(),
       ]);
 
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         tokenBalance: ethers.formatUnits(balance, 18),
-        tokenSymbol: symbol
+        tokenSymbol: symbol,
       }));
-    } catch (error) {
-      console.error('Error fetching token details:', error);
-      setState(prevState => ({
-        ...prevState,
-        error: 'Failed to fetch token details'
-      }));
+    } catch (primaryError) {
+      console.warn(
+        "Primary provider failed, attempting fallback...",
+        primaryError
+      );
+
+      try {
+        // Attempt with fallback provider
+        const fallbackTokenContract = new ethers.Contract(
+          state.tokenAddress,
+          tokenAbi,
+          fallbackProvider
+        );
+        const [balance, symbol] = await Promise.all([
+          fallbackTokenContract.balanceOf(address),
+          fallbackTokenContract.symbol(),
+        ]);
+
+        setState((prevState) => ({
+          ...prevState,
+          tokenBalance: ethers.formatUnits(balance, 18),
+          tokenSymbol: symbol,
+        }));
+      } catch (fallbackError) {
+        console.error("Both providers failed:", fallbackError);
+        setState((prevState) => ({
+          ...prevState,
+          error: "Failed to fetch token details",
+        }));
+      }
     }
   }, [address, state.tokenAddress, isConnected]);
 
@@ -74,35 +104,41 @@ const CreateGame: React.FC = () => {
   }, [fetchTokenBalance]);
 
   const validateInput = (): string | null => {
-    if (!isConnected) return 'Please connect your wallet';
-    if (!state.betAmount || parseFloat(state.betAmount) <= 0) return 'Bet amount must be positive';
+    if (!isConnected) return "Please connect your wallet";
+    if (!state.betAmount || parseFloat(state.betAmount) <= 0)
+      return "Bet amount must be positive";
     if (parseFloat(state.tokenBalance) < parseFloat(state.betAmount)) {
-    return `Insufficient ${state.tokenSymbol} balance`;
-    }    
-    if (!state.timeoutDuration || parseInt(state.timeoutDuration) < 300) return 'Timeout must be at least 5 minutes';
+      return `Insufficient ${state.tokenSymbol} balance`;
+    }
+    if (!state.timeoutDuration || parseInt(state.timeoutDuration) < 300)
+      return "Timeout must be at least 5 minutes";
     return null;
   };
 
-  console.log('player1chioce', state.player1Choice);
+  console.log("player1chioce", state.player1Choice);
 
   const handleCreateGame = async () => {
-
     const validationError = validateInput();
-    console.log(validationError); 
-  
+    console.log(validationError);
+
     if (validationError) {
-      setState(prev => ({ ...prev, error: validationError }));
-  
+      setState((prev) => ({ ...prev, error: validationError }));
+
       // Clear the error message after 1 second (1000 milliseconds)
       setTimeout(() => {
-        setState(prev => ({ ...prev, error: null }));
+        setState((prev) => ({ ...prev, error: null }));
       }, 1000);
-  
+
       return;
     }
-  
-    setState(prev => ({ ...prev, error: null, success: null, loading: true }));
-  
+
+    setState((prev) => ({
+      ...prev,
+      error: null,
+      success: null,
+      loading: true,
+    }));
+
     try {
       await createGame(
         state.tokenAddress,
@@ -110,36 +146,35 @@ const CreateGame: React.FC = () => {
         state.player1Choice,
         state.timeoutDuration
       );
-  
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
-        success: 'Game created successfully!',
+        success: "Game created successfully!",
         loading: false,
-        betAmount: '' // Reset bet amount after successful creation
+        betAmount: "", // Reset bet amount after successful creation
       }));
-  
+
       // Clear the success message after 5 seconds (5000 milliseconds)
       setTimeout(() => {
-        setState(prev => ({ ...prev, success: null }));
+        setState((prev) => ({ ...prev, success: null }));
       }, 5000);
-  
+
       // Refresh token balance
       fetchTokenBalance();
     } catch (error: any) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: error.message || 'Failed to create game',
-        loading: false
+        error: error.message || "Failed to create game",
+        loading: false,
       }));
-  
+
       // Clear the error message after 1 second (1000 milliseconds)
       setTimeout(() => {
-        setState(prev => ({ ...prev, error: null }));
+        setState((prev) => ({ ...prev, error: null }));
       }, 1000);
     }
   };
-  
-  
+
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
@@ -161,7 +196,10 @@ const CreateGame: React.FC = () => {
 
           {/* Bet Amount Input */}
           <div>
-            <label htmlFor="betAmount" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="betAmount"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Bet Amount
             </label>
             <div className="text-gray-700 relative">
@@ -172,7 +210,9 @@ const CreateGame: React.FC = () => {
                 min="0"
                 placeholder="0.00"
                 value={state.betAmount}
-                onChange={(e) => setState(prev => ({ ...prev, betAmount: e.target.value }))}
+                onChange={(e) =>
+                  setState((prev) => ({ ...prev, betAmount: e.target.value }))
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
@@ -183,13 +223,18 @@ const CreateGame: React.FC = () => {
 
           {/* Token Selection */}
           <div>
-            <label htmlFor="token" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="token"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Select Token
             </label>
             <select
               id="token"
               value={state.tokenAddress}
-              onChange={(e) => setState(prev => ({ ...prev, tokenAddress: e.target.value }))}
+              onChange={(e) =>
+                setState((prev) => ({ ...prev, tokenAddress: e.target.value }))
+              }
               className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
             >
               {Object.entries(SUPPORTED_TOKENS).map(([key, value]) => (
@@ -202,13 +247,21 @@ const CreateGame: React.FC = () => {
 
           {/* Timeout Duration */}
           <div>
-            <label htmlFor="timeout" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="timeout"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Game Timeout
             </label>
             <select
               id="timeout"
               value={state.timeoutDuration}
-              onChange={(e) => setState(prev => ({ ...prev, timeoutDuration: e.target.value }))}
+              onChange={(e) =>
+                setState((prev) => ({
+                  ...prev,
+                  timeoutDuration: e.target.value,
+                }))
+              }
               className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
             >
               <option value="300">5 minutes</option>
@@ -219,17 +272,26 @@ const CreateGame: React.FC = () => {
 
           {/* Player Choice */}
           <div className="flex items-center gap-2">
-             <span className="ml-3 text-sm font-medium text-gray-700">Tails</span>
-            
+            <span className="ml-3 text-sm font-medium text-gray-700">
+              Tails
+            </span>
+
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={state.player1Choice}
-                onChange={(e) => setState(prev => ({ ...prev, player1Choice: e.target.checked }))}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    player1Choice: e.target.checked,
+                  }))
+                }
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-              <span className="ml-3 text-sm font-medium text-gray-700">Heads</span>
+              <span className="ml-3 text-sm font-medium text-gray-700">
+                Heads
+              </span>
             </label>
           </div>
 
@@ -239,8 +301,8 @@ const CreateGame: React.FC = () => {
             disabled={state.loading || !isConnected}
             className={`w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-white font-medium transition-colors ${
               state.loading || !isConnected
-                ? 'bg-indigo-400 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700'
+                ? "bg-indigo-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700"
             }`}
           >
             {state.loading ? (
@@ -275,16 +337,16 @@ const CreateGame: React.FC = () => {
           <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-blue-600">
-              Create a new game by setting your bet amount and choosing heads or tails. The game will timeout if no one joins within the selected timeout period.
+              Create a new game by setting your bet amount and choosing heads or
+              tails. The game will timeout if no one joins within the selected
+              timeout period.
             </p>
           </div>
         </div>
       </div>
-      <div>
-       
-      </div>
+      <div></div>
     </div>
   );
 };
 
-export default CreateGame
+export default CreateGame;
