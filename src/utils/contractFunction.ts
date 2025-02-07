@@ -13,11 +13,11 @@ export const SUPPORTED_TOKENS = {
 
 // Set up provider and contract for public access (read-only)
 export const publicProvider = new ethers.JsonRpcProvider(
-  "https://base-mainnet.infura.io/v3/b17a040a14bc48cfb3928a73d26f3617"
+  "https://base-mainnet.g.alchemy.com/v2/os5WiDtgiyV3YXhsy2P-Cc0IX5IwFbYy"
 );
 
 export const fallbackProvider = new ethers.JsonRpcProvider(
-  "https://base-mainnet.g.alchemy.com/v2/os5WiDtgiyV3YXhsy2P-Cc0IX5IwFbYy"
+  "https://base-mainnet.infura.io/v3/b17a040a14bc48cfb3928a73d26f3617"
 );
 
 export const publicContract = new ethers.Contract(ADDRESS, ABI, publicProvider);
