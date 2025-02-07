@@ -353,6 +353,19 @@ export const ABI = [
   {
     inputs: [
       {
+        internalType: "uint256",
+        name: "gameId",
+        type: "uint256",
+      },
+    ],
+    name: "withdrawReward",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "tokenAddress",
         type: "address",
@@ -608,7 +621,7 @@ export const ABI = [
 ];
 
 // src/contracts/FlipGameContract.ts
-export const ADDRESS = "0xEA61dadeBD3077d764A510c6b05a5329Da6A003F";
+export const ADDRESS = "0xaC225DAeA5F5494315fcc3a30c496A455A09cF05";
 
 // Supported tokens -
 // 0x07F41412697D14981e770b6E335051b1231A2bA8

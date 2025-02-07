@@ -81,8 +81,14 @@ const Available = () => {
         setLoading(false);
       }
     };
-
+    // Initial fetch
     fetchGameDetails();
+
+    // Set interval to fetch game data every 5 seconds
+    const intervalId = setInterval(fetchGameDetails, 5000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleJoinGame = async (gameId: number) => {
@@ -195,15 +201,15 @@ const Available = () => {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Token Name
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    {/* <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Game Completed
-                    </th>
+                    </th> */}
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       player1Choice
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    {/* <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Time
-                    </th>
+                    </th> */}
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Actions
                     </th>
@@ -236,23 +242,13 @@ const Available = () => {
                           {game.tokenName || "Unknown"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {game.isCompleted ? "Yes" : "No"}
-                        </span>
-                      </td>
+
                       <td className="px-6 py-4">
                         <span className="text-white/90">
                           {game.player1Choice ? "Heads" : "Tails"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {game.timeLeft
-                            ? `${game.timeLeft.hours}h ${game.timeLeft.minutes}m ${game.timeLeft.seconds}s`
-                            : "Expired"}
-                        </span>
-                      </td>
+
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <button
