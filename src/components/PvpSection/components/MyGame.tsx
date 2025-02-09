@@ -62,25 +62,33 @@ const MyGame = () => {
     RaTcHeT: "0x1d35741c51fb615ca70e28d3321f6f01e8d8a12d",
     GIRTH: "0xa97d71a5fdf906034d9d121ed389665427917ee4",
   };
-const playerAddress = address
-  const address = '0x8A62f3AAbF704229ffAA456077d556d656cB1311';
+
+  const { address } = useAppKitAccount();
+
+
   const [selectedTab, setSelectedTab] = useState<"created" | "joined" | "resolved">("created");
 
-  const [tokenAddress, setTokenAddress] = useState(SUPPORTED_TOKENS.STABLEAI);
 
+
+  // Wait until address is available before making queries
+  if (!address) {
+    return (
+      <div>Loading...</div> // Show a loading message until the address is available
+    );
+  }
   const { data: createdData, loading: loadingCreated } = useQuery<{ gameCreateds: GameCreated[] }>(
     GET_GAMES_CREATED,
-    { variables: { address } }
+    { variables: { playerAddress: address} }
   );
 
   const { data: joinedData, loading: loadingJoined } = useQuery<{ gameJoineds: GameJoined[] }>(
     GET_GAMES_JOINED,
-    { variables: { address } }
+    { variables: { playerAddress: address } }
   );
 
   const { data: resolvedData, loading: loadingResolved } = useQuery<{ gameResolveds: GameResolved[] }>(
     GET_GAMES_RESOLVED,
-    { variables: { address } }
+    { variables: {playerAddress: address} }
   );
 
   // Utility function to convert Wei to Ether
@@ -94,6 +102,15 @@ const playerAddress = address
   const formatAddress = (address: string) => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
+
+  const getTokenName = (tokenAddress: string) => {
+    // Use keyof typeof to restrict the key to be one of the valid tokens
+    const tokenName = Object.keys(SUPPORTED_TOKENS).find(
+      (key) => SUPPORTED_TOKENS[key as keyof typeof SUPPORTED_TOKENS] === tokenAddress
+    );
+    return tokenName || "Unknown Token";
+  };
+  
 
   // Log data to console for debugging
   useEffect(() => {
@@ -160,7 +177,7 @@ const playerAddress = address
                   <td className="py-2">{game.gameId}</td>
                   <td className="py-2">{weiToEther(game.betAmount)}</td>
                   <td className="py-2">{game.player1Choice ? "Head" : "Tail"}</td>
-                  <td className="py-2">{formatAddress(game.tokenAddress)}</td>
+                  <td className="py-2">{getTokenName(game.tokenAddress)}</td>
                 </tr>
               ))
             ))}
