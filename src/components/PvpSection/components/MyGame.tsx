@@ -1,9 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
-import {
-  useAppKitAccount,
-   } from '@reown/appkit/react'
-
+import { useAppKitAccount } from "@reown/appkit/react";
 
 const GET_GAMES_CREATED = gql`
   query GetGamesCreated($playerAddress: Bytes!) {
@@ -55,7 +52,6 @@ interface GameResolved {
 }
 
 const MyGame = () => {
-
   const SUPPORTED_TOKENS = {
     STABLEAI: "0x07F41412697D14981e770b6E335051b1231A2bA8",
     DIG: "0x208561379990f106E6cD59dDc14dFB1F290016aF",
@@ -66,45 +62,49 @@ const MyGame = () => {
     GIRTH: "0xa97d71a5fdf906034d9d121ed389665427917ee4",
   };
 
-  const {address} = useAppKitAccount();  
-  const [selectedTab, setSelectedTab] = useState<"created" | "joined" | "resolved">("created");
+  const { address } = useAppKitAccount();
+  const [selectedTab, setSelectedTab] = useState<
+    "created" | "joined" | "resolved"
+  >("created");
 
-  const [tokenAddress, setTokenAddress] = useState(SUPPORTED_TOKENS.STABLEAI);
+  const [] = useState(SUPPORTED_TOKENS.STABLEAI);
 
-  const { data: createdData, loading: loadingCreated } = useQuery<{ gameCreateds: GameCreated[] }>(
-    GET_GAMES_CREATED,
-    { variables: { address } }
-  );
+  const { data: createdData, loading: loadingCreated } = useQuery<{
+    gameCreateds: GameCreated[];
+  }>(GET_GAMES_CREATED, { variables: { address } });
 
-  const { data: joinedData, loading: loadingJoined } = useQuery<{ gameJoineds: GameJoined[] }>(
-    GET_GAMES_JOINED,
-    { variables: { address } }
-  );
+  const { data: joinedData, loading: loadingJoined } = useQuery<{
+    gameJoineds: GameJoined[];
+  }>(GET_GAMES_JOINED, { variables: { address } });
 
-  const { data: resolvedData, loading: loadingResolved } = useQuery<{ gameResolveds: GameResolved[] }>(
-    GET_GAMES_RESOLVED,
-    { variables: { address } }
-  );
+  const { data: resolvedData, loading: loadingResolved } = useQuery<{
+    gameResolveds: GameResolved[];
+  }>(GET_GAMES_RESOLVED, { variables: { address } });
 
-    // Utility function to convert Wei to Ether
-const weiToEther = (wei: string) => {
-  const weiValue = BigInt(wei);
-  const etherValue = Number(weiValue) / 1e18; // Convert Wei to Ether (1 Ether = 10^18 Wei)
-  return etherValue.toFixed(0); // Return with 4 decimal places
-};
+  // Utility function to convert Wei to Ether
+  const weiToEther = (wei: string) => {
+    const weiValue = BigInt(wei);
+    const etherValue = Number(weiValue) / 1e18; // Convert Wei to Ether (1 Ether = 10^18 Wei)
+    return etherValue.toFixed(0); // Return with 4 decimal places
+  };
 
   // Utility function to format the player address
   const formatAddress = (address: string) => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
-  
+
   return (
     <div className="bg-background dark:bg-background dark:text-primary-foreground p-4 rounded-lg shadow-md w-full">
       <div className="flex items-center mb-4">
-        <img className="w-12 h-12 rounded-full mr-3" src="https://placehold.co/48x48" alt="User Avatar" />
+        <img
+          className="w-12 h-12 rounded-full mr-3"
+          src="https://placehold.co/48x48"
+          alt="User Avatar"
+        />
         <div>
-        <h2 className="text-lg font-semibold">{formatAddress(address ?? "Unknown address")}</h2>
-
+          <h2 className="text-lg font-semibold">
+            {formatAddress(address ?? "Unknown address")}
+          </h2>
 
           <span className="text-muted-foreground">Player balance💰 0</span>
         </div>
@@ -113,19 +113,31 @@ const weiToEther = (wei: string) => {
       {/* Tab Navigation */}
       <div className="flex justify-between mb-2">
         <button
-          className={`px-4 py-2 font-medium ${selectedTab === "created" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-500"}`}
+          className={`px-4 py-2 font-medium ${
+            selectedTab === "created"
+              ? "text-blue-500 border-b-2 border-blue-500"
+              : "text-gray-500"
+          }`}
           onClick={() => setSelectedTab("created")}
         >
           Created
         </button>
         <button
-          className={`px-4 py-2 font-medium ${selectedTab === "joined" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-500"}`}
+          className={`px-4 py-2 font-medium ${
+            selectedTab === "joined"
+              ? "text-blue-500 border-b-2 border-blue-500"
+              : "text-gray-500"
+          }`}
           onClick={() => setSelectedTab("joined")}
         >
           Joined
         </button>
         <button
-          className={`px-4 py-2 font-medium ${selectedTab === "resolved" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-500"}`}
+          className={`px-4 py-2 font-medium ${
+            selectedTab === "resolved"
+              ? "text-blue-500 border-b-2 border-blue-500"
+              : "text-gray-500"
+          }`}
           onClick={() => setSelectedTab("resolved")}
         >
           Resolved
@@ -138,35 +150,46 @@ const weiToEther = (wei: string) => {
           <tr className="border-b border-border">
             <th className="py-2 text-muted-foreground">GameId</th>
             <th className="py-2 text-muted-foreground">BetAmount</th>
-            {selectedTab === "created" && <th className="py-2 text-muted-foreground">Player1Choice</th>}
-            {selectedTab === "created" && <th className="py-2 text-muted-foreground">TokenName</th>}
-            {selectedTab === "resolved" && <th className="py-2 text-muted-foreground">Payout</th>}
+            {selectedTab === "created" && (
+              <th className="py-2 text-muted-foreground">Player1Choice</th>
+            )}
+            {selectedTab === "created" && (
+              <th className="py-2 text-muted-foreground">TokenName</th>
+            )}
+            {selectedTab === "resolved" && (
+              <th className="py-2 text-muted-foreground">Payout</th>
+            )}
           </tr>
         </thead>
         <tbody>
-         {/* Render Created Games */}
-{selectedTab === "created" &&
-  (loadingCreated ? (
-    <tr>
-      <td colSpan={4} className="text-center">
-        Loading Created Games...
-      </td>
-    </tr>
-  ) : (
-    createdData?.gameCreateds.map((game) => (
-      <tr key={game.gameId} className="border-b border-border">
-        <td className="py-2">{game.gameId}</td>
-        <td className="py-2">{weiToEther(game.betAmount)}</td>
-        <td className="py-2">{game.player1Choice ? "Head" : "Tail"}</td>
-        <td className="py-2">
-          {SUPPORTED_TOKENS[game.tokenAddress as keyof typeof SUPPORTED_TOKENS]
-            ? SUPPORTED_TOKENS[game.tokenAddress as keyof typeof SUPPORTED_TOKENS]
-            : formatAddress(game.tokenAddress)}
-        </td>
-      </tr>
-    ))
-  ))}
-
+          {/* Render Created Games */}
+          {selectedTab === "created" &&
+            (loadingCreated ? (
+              <tr>
+                <td colSpan={4} className="text-center">
+                  Loading Created Games...
+                </td>
+              </tr>
+            ) : (
+              createdData?.gameCreateds.map((game) => (
+                <tr key={game.gameId} className="border-b border-border">
+                  <td className="py-2">{game.gameId}</td>
+                  <td className="py-2">{weiToEther(game.betAmount)}</td>
+                  <td className="py-2">
+                    {game.player1Choice ? "Head" : "Tail"}
+                  </td>
+                  <td className="py-2">
+                    {SUPPORTED_TOKENS[
+                      game.tokenAddress as keyof typeof SUPPORTED_TOKENS
+                    ]
+                      ? SUPPORTED_TOKENS[
+                          game.tokenAddress as keyof typeof SUPPORTED_TOKENS
+                        ]
+                      : formatAddress(game.tokenAddress)}
+                  </td>
+                </tr>
+              ))
+            ))}
 
           {/* Render Joined Games */}
           {selectedTab === "joined" &&

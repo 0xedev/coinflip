@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { createGame, SUPPORTED_TOKENS } from "../../../utils/contractFunction";
-import {
-  Coins,
-  Loader2,
-  Plus,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-} from "lucide-react";
+import { Coins, Loader2, Plus, AlertCircle, CheckCircle2 } from "lucide-react";
 
 import { ethers } from "ethers";
-import { publicProvider, fallbackProvider } from "../../../utils/contractFunction";
+import {
+  publicProvider,
+  fallbackProvider,
+} from "../../../utils/contractFunction";
 
 interface CreateGameState {
   player1Choice: boolean;
@@ -334,7 +330,6 @@ const CreateGame: React.FC = () => {
           )}
 
           {/* Help Text */}
-        
         </div>
       </div>
       <div></div>

@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from "react";
 import { useQuery } from "@apollo/client";
-import { GET_TOP_PLAYERS_BY_PAYOUT, GET_TOP_PLAYERS_BY_BET, GET_TOP_PLAYERS_BY_WINS } from "../client/queries";
-
-// Define Player Data Interface
-interface PlayerData {
-  player: string;
-  betAmount?: number;
-  winAmount?: number;
-  payoutAmount?: number;
-}
+import {
+  GET_TOP_PLAYERS_BY_PAYOUT,
+  GET_TOP_PLAYERS_BY_BET,
+  GET_TOP_PLAYERS_BY_WINS,
+} from "../client/queries";
 
 const Leaderb = () => {
   const SUPPORTED_TOKENS = {
@@ -22,20 +18,22 @@ const Leaderb = () => {
   };
 
   // Utility function to convert Wei to Ether
-const weiToEther = (wei: string) => {
-  const weiValue = BigInt(wei);
-  const etherValue = Number(weiValue) / 1e18; // Convert Wei to Ether (1 Ether = 10^18 Wei)
-  return etherValue.toFixed(0); // Return with 4 decimal places
-};
+  const weiToEther = (wei: string) => {
+    const weiValue = BigInt(wei);
+    const etherValue = Number(weiValue) / 1e18; // Convert Wei to Ether (1 Ether = 10^18 Wei)
+    return etherValue.toFixed(0); // Return with 4 decimal places
+  };
 
   const [tokenAddress, setTokenAddress] = useState(SUPPORTED_TOKENS.STABLEAI);
   const [category, setCategory] = useState("Bet"); // Default to "Bet"
 
   // Query selection based on category
   const { loading, error, data } = useQuery(
-    category === "Bet" ? GET_TOP_PLAYERS_BY_BET :
-    category === "Win" ? GET_TOP_PLAYERS_BY_WINS :
-    GET_TOP_PLAYERS_BY_PAYOUT,
+    category === "Bet"
+      ? GET_TOP_PLAYERS_BY_BET
+      : category === "Win"
+      ? GET_TOP_PLAYERS_BY_WINS
+      : GET_TOP_PLAYERS_BY_PAYOUT,
     { variables: { tokenAddress } }
   );
 
@@ -43,21 +41,22 @@ const weiToEther = (wei: string) => {
   if (error) return <p>Error: {error.message}</p>;
 
   // Determine the merged data based on selected category
-  const mergedData = category === "Bet" ? data.playerBets :
-                      category === "Win" ? data.playerWins :
-                      data.playerPayouts;
+  const mergedData =
+    category === "Bet"
+      ? data.playerBets
+      : category === "Win"
+      ? data.playerWins
+      : data.playerPayouts;
 
   // Utility function to format the player address
-const formatAddress = (address: string) => {
-  return `${address.slice(0, 4)}...${address.slice(-4)}`;
-};
-
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  };
 
   return (
-    <div className="bg-background p-4 rounded-lg shadow-lg"> 
-    <h1 className='text-2xl font-semibold'>Leaderboard</h1>
+    <div className="bg-background p-4 rounded-lg shadow-lg">
+      <h1 className="text-2xl font-semibold">Leaderboard</h1>
       <div className="flex justify-between mb-4">
-       
         <select
           className="border rounded p-2"
           value={category}
@@ -80,7 +79,6 @@ const formatAddress = (address: string) => {
             </option>
           ))}
         </select>
-
       </div>
 
       <div className="overflow-x-auto">
@@ -92,29 +90,36 @@ const formatAddress = (address: string) => {
             </tr>
           </thead>
           <tbody>
-  {/* Check if there is no data */}
-  {mergedData && mergedData.length > 0 ? (
-    mergedData.map((item: any, index: number) => {
-      const playerAddress = item.id.split('-')[0]; // Extract player address from the ID
-      return (
-        <tr key={index} className="border-b border-border">
-          <td className="px-6 py-4  ">{formatAddress(playerAddress)}</td> {/* Display formatted player address */}
-          <td className="px-6 py-4  ">
-            {category === "Bet" ? 
-              weiToEther(item.betAmount) :  // Convert betAmount to Ether
-              category === "Win" ? item.winAmount :
-              category === "Payout" ? item.payoutAmount : null}
-          </td>
-        </tr>
-      );
-    })
-  ) : (
-    <tr>
-      <td colSpan={2} className="py-2 text-center">No players found for this selection.</td>
-    </tr>
-  )}
-</tbody>
-
+            {/* Check if there is no data */}
+            {mergedData && mergedData.length > 0 ? (
+              mergedData.map((item: any, index: number) => {
+                const playerAddress = item.id.split("-")[0]; // Extract player address from the ID
+                return (
+                  <tr key={index} className="border-b border-border">
+                    <td className="px-6 py-4  ">
+                      {formatAddress(playerAddress)}
+                    </td>{" "}
+                    {/* Display formatted player address */}
+                    <td className="px-6 py-4  ">
+                      {category === "Bet"
+                        ? weiToEther(item.betAmount) // Convert betAmount to Ether
+                        : category === "Win"
+                        ? item.winAmount
+                        : category === "Payout"
+                        ? item.payoutAmount
+                        : null}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={2} className="py-2 text-center">
+                  No players found for this selection.
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
     </div>

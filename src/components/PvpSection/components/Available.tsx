@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_AVAILABLE_GAMES } from "../client/queries";
 import { CircleDollarSign, XCircle, GamepadIcon } from "lucide-react";
-import { joinGame, resolveGame, claimReward } from "../../../utils/contractFunction";
+import { joinGame } from "../../../utils/contractFunction";
 import client from "../client/apollo-client";
 
 interface Available {
@@ -39,9 +39,12 @@ const LoadingSpinner = () => (
 );
 
 function GameList() {
-  const { loading, error, data } = useQuery<{ gameCreateds: Available[] }>(GET_AVAILABLE_GAMES, {
-    client,
-  });
+  const { loading, error, data } = useQuery<{ gameCreateds: Available[] }>(
+    GET_AVAILABLE_GAMES,
+    {
+      client,
+    }
+  );
 
   const [loadingGameId, setLoadingGameId] = useState<number | null>(null);
   const [errorMessage, setError] = useState<string | null>(null);
@@ -55,7 +58,9 @@ function GameList() {
   const games = data?.gameCreateds || [];
 
   // Sort games by gameId in descending order
-  const sortedGames = [...games].sort((a, b) => Number(b.gameId) - Number(a.gameId));
+  const sortedGames = [...games].sort(
+    (a, b) => Number(b.gameId) - Number(a.gameId)
+  );
 
   // Pagination Logic
   const indexOfLastGame = currentPage * gamesPerPage;
@@ -64,43 +69,27 @@ function GameList() {
 
   // Handle joining a game
   const handleJoinGame = async (gameId: string) => {
-    setLoadingGameId(Number(gameId)); 
-    setError(null); 
+    setLoadingGameId(Number(gameId));
+    setError(null);
     try {
       console.log(`Joining game ${gameId}...`);
-      await joinGame(gameId);
+      await joinGame(Number(gameId));
       console.log(`Successfully joined game ${gameId}`);
     } catch (err: any) {
       console.error("Error joining game:", err);
-      setError(err instanceof Error ? `Failed to join game: ${err.message}` : "An unknown error occurred while trying to join the game.");
+      setError(
+        err instanceof Error
+          ? `Failed to join game: ${err.message}`
+          : "An unknown error occurred while trying to join the game."
+      );
     } finally {
-      setLoadingGameId(null); 
+      setLoadingGameId(null);
     }
   };
 
   // Handle resolving a game
-  const handleResolveGame = async (gameId: string) => {
-    try {
-      console.log(`Resolving game ${gameId}...`);
-      await resolveGame(gameId);
-      console.log(`Successfully resolved game ${gameId}`);
-    } catch (err: any) {
-      console.error("Error resolving game:", err);
-      setError(err instanceof Error ? `Failed to resolve game: ${err.message}` : "Failed to resolve game: An unknown error occurred.");
-    }
-  };
 
   // Handle claiming a reward
-  const handleClaimReward = async (gameId: string) => {
-    try {
-      console.log(`Claiming reward for game ${gameId}...`);
-      await claimReward(gameId);
-      console.log(`Successfully claimed reward for game ${gameId}`);
-    } catch (err: any) {
-      console.error("Error claiming reward:", err);
-      setError(err instanceof Error ? `Failed to claim reward: ${err.message}` : "Failed to claim reward: An unknown error occurred.");
-    }
-  };
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -133,39 +122,58 @@ function GameList() {
             </p>
           </div>
         ) : (
-<div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl overflow-hidden">
-  <div className="overflow-x-auto">
-    <table className="w-full table-auto">
-      <thead>
-        <tr className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/10">
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">Game ID</th>
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">Required Bet</th>
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">Token Name</th>
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">P1 Choice</th>
-          <th className="px-6 py-4 text-center text-sm font-semibold text-white">Join</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-white/10">
-        {currentGames?.map((game) => (
-          <tr key={game.id} className="bg-white/10">
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.gameId}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{weiToEther(game.betAmount)} {game.tokenSymbol}</td> 
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.tokenName}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.player1Choice ? "Head" : "Tail"}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
-              <button
-                onClick={() => handleJoinGame(game.gameId)}
-                className="text-white hover:text-white/90 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
-              >
-                {loadingGameId === Number(game.gameId) ? "Joining..." : "Join"}
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/10">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                      Game ID
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                      Required Bet
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                      Token Name
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                      P1 Choice
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">
+                      Join
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {currentGames?.map((game) => (
+                    <tr key={game.id} className="bg-white/10">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {game.gameId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {weiToEther(game.betAmount)} {game.tokenSymbol}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {game.tokenName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {game.player1Choice ? "Head" : "Tail"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
+                        <button
+                          onClick={() => handleJoinGame(game.gameId)}
+                          className="text-white hover:text-white/90 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
+                        >
+                          {loadingGameId === Number(game.gameId)
+                            ? "Joining..."
+                            : "Join"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
             <div className="flex justify-between items-center p-4">

@@ -52,17 +52,9 @@ import { projectId, metadata, networks, wagmiAdapter } from "./config/config";
 import { ApolloProvider } from "@apollo/client";
 import client from "./components/PvpSection/client/apollo-client";
 
-import Navbar from "./components/Navbar";
 import HomePage from "./components/HomePage";
-import CreateGame from "./components/CreateGame";
-import Availabl from "./components/Available";
-import GetGameState from "./components/GetGameState";
-import GameCreatedList from "./components/PvpSection/client/GameCreatedList";
-
-
 
 import "./App.css";
-import GameStats from "./components/PvpSection/components/GameStat";
 import Pvp from "./components/PvpSection/Pvp";
 
 const queryClient = new QueryClient();
@@ -83,16 +75,11 @@ const PvPSection = () => {
   return (
     <ApolloProvider client={client}>
       <div>
-        
-        
-          <WagmiProvider config={wagmiAdapter.wagmiConfig}>
-            <QueryClientProvider client={queryClient}>
-             <Pvp/>
-            </QueryClientProvider>
-          </WagmiProvider>
-        
-        
-      
+        <WagmiProvider config={wagmiAdapter.wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <Pvp />
+          </QueryClientProvider>
+        </WagmiProvider>
       </div>
     </ApolloProvider>
   );
