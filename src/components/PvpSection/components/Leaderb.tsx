@@ -6,8 +6,21 @@ import {
   GET_TOP_PLAYERS_BY_WINS,
 } from "../client/queries";
 
-const Leaderb = () => {
-  const SUPPORTED_TOKENS = {
+interface PlayerData {
+  id: string;
+  betAmount?: string;
+  winAmount?: number;
+  payoutAmount?: number;
+}
+
+interface TokenMap {
+  [key: string]: string;
+}
+
+type Category = "Bet" | "Win" | "Payout";
+
+const Leaderboard = () => {
+  const SUPPORTED_TOKENS: TokenMap = {
     STABLEAI: "0x07F41412697D14981e770b6E335051b1231A2bA8",
     DIG: "0x208561379990f106E6cD59dDc14dFB1F290016aF",
     WEB9: "0x09CA293757C6ce06df17B96fbcD9c5f767f4b2E1",
@@ -17,17 +30,17 @@ const Leaderb = () => {
     GIRTH: "0xa97d71a5fdf906034d9d121ed389665427917ee4",
   };
 
-  // Utility function to convert Wei to Ether
-  const weiToEther = (wei: string) => {
+  const [tokenAddress, setTokenAddress] = useState<string>(
+    SUPPORTED_TOKENS.STABLEAI
+  );
+  const [category, setCategory] = useState<Category>("Bet");
+
+  const weiToEther = (wei: string): string => {
     const weiValue = BigInt(wei);
-    const etherValue = Number(weiValue) / 1e18; // Convert Wei to Ether (1 Ether = 10^18 Wei)
-    return etherValue.toFixed(0); // Return with 4 decimal places
+    const etherValue = Number(weiValue) / 1e18;
+    return etherValue.toFixed(0);
   };
 
-  const [tokenAddress, setTokenAddress] = useState(SUPPORTED_TOKENS.STABLEAI);
-  const [category, setCategory] = useState("Bet"); // Default to "Bet"
-
-  // Query selection based on category
   const { loading, error, data } = useQuery(
     category === "Bet"
       ? GET_TOP_PLAYERS_BY_BET
@@ -37,93 +50,120 @@ const Leaderb = () => {
     { variables: { tokenAddress } }
   );
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
+  const formatAddress = (address: string): string =>
+    `${address.slice(0, 4)}...${address.slice(-4)}`;
 
-  // Determine the merged data based on selected category
-  const mergedData =
-    category === "Bet"
+  const mergedData: PlayerData[] = data
+    ? category === "Bet"
       ? data.playerBets
       : category === "Win"
       ? data.playerWins
-      : data.playerPayouts;
+      : data.playerPayouts
+    : [];
 
-  // Utility function to format the player address
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  const getRankEmoji = (index: number): string | number => {
+    switch (index) {
+      case 0:
+        return "🏆";
+      case 1:
+        return "🥈";
+      case 2:
+        return "🥉";
+      default:
+        return index + 1;
+    }
   };
 
-  return (
-    <div className="bg-background p-4 rounded-lg shadow-lg">
-      <h1 className="text-2xl font-semibold">Leaderboard</h1>
-      <div className="flex justify-between mb-4">
-        <select
-          className="border rounded p-2"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="Bet">Bet</option>
-          <option value="Win">Win</option>
-          <option value="Payout">Payout</option>
-        </select>
-
-        {/* Dropdown for selecting token address */}
-        <select
-          className="border rounded p-2"
-          value={tokenAddress}
-          onChange={(e) => setTokenAddress(e.target.value)}
-        >
-          {Object.entries(SUPPORTED_TOKENS).map(([key, value]) => (
-            <option key={value} value={value}>
-              {key}
-            </option>
-          ))}
-        </select>
+  if (error)
+    return (
+      <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+        <div className="p-6">
+          <div className="text-red-500">Error: {error.message}</div>
+        </div>
       </div>
+    );
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left">
-          <thead>
-            <tr className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/10">
-              <th className="px-6 py-4   text-black">Player</th>
-              <th className="px-6 py-4    text-black">{category}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Check if there is no data */}
-            {mergedData && mergedData.length > 0 ? (
-              mergedData.map((item: any, index: number) => {
-                const playerAddress = item.id.split("-")[0]; // Extract player address from the ID
-                return (
-                  <tr key={index} className="border-b border-border">
-                    <td className="px-6 py-4  ">
+  return (
+    <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Leaderboard</h2>
+          <select
+            className="px-4 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            value={tokenAddress}
+            onChange={(e) => setTokenAddress(e.target.value)}
+          >
+            {Object.entries(SUPPORTED_TOKENS).map(([key, value]) => (
+              <option key={value} value={value}>
+                {key}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-6">
+          <div className="flex rounded-lg overflow-hidden border">
+            {(["Bet", "Win", "Payout"] as Category[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setCategory(tab)}
+                className={`flex-1 px-4 py-2 text-center transition-colors ${
+                  category === tab
+                    ? "bg-purple-500 text-white"
+                    : "bg-white text-gray-600 hover:bg-purple-50"
+                }`}
+              >
+                {tab}s
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <div className="text-gray-500">Loading leaderboard...</div>
+            </div>
+          ) : mergedData.length > 0 ? (
+            mergedData.map((item: PlayerData, index: number) => {
+              const playerAddress = item.id.split("-")[0];
+              const value =
+                category === "Bet"
+                  ? weiToEther(item.betAmount || "0")
+                  : category === "Win"
+                  ? item.winAmount
+                  : item.payoutAmount;
+
+              return (
+                <div
+                  key={index}
+                  className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                    index < 3
+                      ? "bg-gradient-to-r from-purple-50 to-pink-50"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 text-center text-xl">
+                      {getRankEmoji(index)}
+                    </div>
+                    <div className="font-medium">
                       {formatAddress(playerAddress)}
-                    </td>{" "}
-                    {/* Display formatted player address */}
-                    <td className="px-6 py-4  ">
-                      {category === "Bet"
-                        ? weiToEther(item.betAmount) // Convert betAmount to Ether
-                        : category === "Win"
-                        ? item.winAmount
-                        : category === "Payout"
-                        ? item.payoutAmount
-                        : null}
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={2} className="py-2 text-center">
-                  No players found for this selection.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                    </div>
+                  </div>
+                  <div className="font-bold">{value}</div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No players found for this selection.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default Leaderb;
+export default Leaderboard;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { useAppKitAccount } from "@reown/appkit/react";
 
@@ -63,23 +63,28 @@ const MyGame = () => {
   };
 
   const { address } = useAppKitAccount();
+
   const [selectedTab, setSelectedTab] = useState<
     "created" | "joined" | "resolved"
   >("created");
 
-  const [] = useState(SUPPORTED_TOKENS.STABLEAI);
-
+  // Wait until address is available before making queries
+  if (!address) {
+    return (
+      <div>Loading...</div> // Show a loading message until the address is available
+    );
+  }
   const { data: createdData, loading: loadingCreated } = useQuery<{
     gameCreateds: GameCreated[];
-  }>(GET_GAMES_CREATED, { variables: { address } });
+  }>(GET_GAMES_CREATED, { variables: { playerAddress: address } });
 
   const { data: joinedData, loading: loadingJoined } = useQuery<{
     gameJoineds: GameJoined[];
-  }>(GET_GAMES_JOINED, { variables: { address } });
+  }>(GET_GAMES_JOINED, { variables: { playerAddress: address } });
 
   const { data: resolvedData, loading: loadingResolved } = useQuery<{
     gameResolveds: GameResolved[];
-  }>(GET_GAMES_RESOLVED, { variables: { address } });
+  }>(GET_GAMES_RESOLVED, { variables: { playerAddress: address } });
 
   // Utility function to convert Wei to Ether
   const weiToEther = (wei: string) => {
@@ -93,6 +98,27 @@ const MyGame = () => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
+  const getTokenName = (tokenAddress: string) => {
+    console.log("Looking for token address:", tokenAddress);
+
+    const tokenName = Object.keys(SUPPORTED_TOKENS).find((key) => {
+      const storedTokenAddress =
+        SUPPORTED_TOKENS[key as keyof typeof SUPPORTED_TOKENS];
+      console.log(`Comparing: ${storedTokenAddress} with ${tokenAddress}`);
+      return storedTokenAddress.toLowerCase() === tokenAddress.toLowerCase(); // Case-insensitive comparison
+    });
+
+    console.log("Found token:", tokenName);
+    return tokenName || "Unknown Token";
+  };
+
+  // Log data to console for debugging
+  useEffect(() => {
+    console.log("Created Games Data:", createdData);
+    console.log("Joined Games Data:", joinedData);
+    console.log("Resolved Games Data:", resolvedData);
+  }, [createdData, joinedData, resolvedData]);
+
   return (
     <div className="bg-background dark:bg-background dark:text-primary-foreground p-4 rounded-lg shadow-md w-full">
       <div className="flex items-center mb-4">
@@ -105,7 +131,6 @@ const MyGame = () => {
           <h2 className="text-lg font-semibold">
             {formatAddress(address ?? "Unknown address")}
           </h2>
-
           <span className="text-muted-foreground">Player balance💰 0</span>
         </div>
       </div>
@@ -178,15 +203,7 @@ const MyGame = () => {
                   <td className="py-2">
                     {game.player1Choice ? "Head" : "Tail"}
                   </td>
-                  <td className="py-2">
-                    {SUPPORTED_TOKENS[
-                      game.tokenAddress as keyof typeof SUPPORTED_TOKENS
-                    ]
-                      ? SUPPORTED_TOKENS[
-                          game.tokenAddress as keyof typeof SUPPORTED_TOKENS
-                        ]
-                      : formatAddress(game.tokenAddress)}
-                  </td>
+                  <td className="py-2">{getTokenName(game.tokenAddress)}</td>
                 </tr>
               ))
             ))}
@@ -222,7 +239,7 @@ const MyGame = () => {
               resolvedData?.gameResolveds.map((game) => (
                 <tr key={game.gameId} className="border-b border-border">
                   <td className="py-2">{game.gameId}</td>
-                  <td className="py-2">{game.betAmount}</td>
+                  <td className="py-2">{weiToEther(game.betAmount)}</td>
                   <td className="py-2">{game.payout}</td>
                 </tr>
               ))
