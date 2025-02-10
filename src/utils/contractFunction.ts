@@ -1,4 +1,4 @@
-import { ethers, BigNumberish } from "ethers";
+import { ethers } from "ethers";
 import { ABI, ADDRESS } from "../contracts/contract";
 
 export const SUPPORTED_TOKENS = {
