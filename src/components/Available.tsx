@@ -1,20 +1,36 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@apollo/client";
+import { GET_AVAILABLE_GAMES } from "src/components/PvpSection/client/queries.ts";
+import { CircleDollarSign, XCircle, GamepadIcon } from "lucide-react";
 import {
-  getGameDetails,
-  getGameIdCounter,
   joinGame,
-  getTimeLeftToExpire,
   resolveGame,
-  claimReward,
+  getGameStatus,
 } from "../utils/contractFunction";
-import {
-  GamepadIcon,
-  Trophy,
-  Coins,
-  XCircle,
-  ArrowRight,
-  CircleDollarSign,
-} from "lucide-react";
+import client from "src/components/PvpSection/client/apollo-client.ts";
+
+interface Available {
+  id: string;
+  gameId: string;
+  player1: string;
+  betAmount: string;
+  player1Choice: boolean;
+  tokenName: string;
+  tokenSymbol: string;
+}
+
+interface GameStatus {
+  state: number;
+  createdAt: number;
+  timeoutDuration: number;
+  timeLeft: number;
+}
+
+const weiToEther = (wei: string) => {
+  const weiValue = BigInt(wei);
+  const etherValue = Number(weiValue) / 1e18;
+  return etherValue.toFixed(0);
+};
 
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center h-64 gap-8">
@@ -32,167 +48,141 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const Available = () => {
-  const [gameDetails, setGameDetails] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [loadingGameId, setLoadingGameId] = useState<number | null>(null); // Track the loading game
-  const gamesPerPage = 5; // Number of games to display per page
+function GameList() {
+  const { loading, error, data } = useQuery<{ gameCreateds: Available[] }>(
+    GET_AVAILABLE_GAMES,
+    {
+      client,
+    }
+  );
+
+  const [loadingGameId, setLoadingGameId] = useState<number | null>(null);
+  const [errorMessage, setError] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const gamesPerPage = 5;
+
+  const [gameStatuses, setGameStatuses] = useState<Record<string, GameStatus>>(
+    {}
+  );
 
   useEffect(() => {
-    const fetchGameDetails = async () => {
-      try {
-        const gameIdCounter = await getGameIdCounter();
-        console.log("Game ID Counter:", gameIdCounter);
-
-        if (gameIdCounter === undefined) {
-          setError("No active games available.");
-          return;
+    const fetchGameStatuses = async () => {
+      const statusMap: Record<string, GameStatus> = {};
+      for (const game of data?.gameCreateds || []) {
+        try {
+          const status = await getGameStatus(Number(game.gameId));
+          statusMap[game.gameId] = status;
+        } catch (error) {
+          console.error("Error fetching status for game:", game.gameId, error);
         }
-
-        const games = await Promise.all(
-          Array.from({ length: gameIdCounter }, async (_, gameId) => {
-            console.log(`Fetching details for game ${gameId}...`);
-            const game = await getGameDetails(gameId);
-            const timeLeft = await getTimeLeftToExpire(gameId);
-            return { ...game, timeLeft, gameId };
-          })
-        );
-
-        const activeGames = games.filter(
-          (game) =>
-            !game.isCompleted &&
-            game.timeLeft &&
-            game.timeLeft.hours * 3600 +
-              game.timeLeft.minutes * 60 +
-              game.timeLeft.seconds >
-              0
-        );
-
-        // Sort games by descending order of gameId
-        activeGames.sort((a, b) => b.gameId - a.gameId);
-
-        setGameDetails(activeGames);
-      } catch (error) {
-        console.error("Error fetching games:", error);
-        setError("Error fetching games");
-      } finally {
-        setLoading(false);
       }
+      setGameStatuses(statusMap);
     };
-    // Initial fetch
-    fetchGameDetails();
 
-    // Set interval to fetch game data every 5 seconds
-    const intervalId = setInterval(fetchGameDetails, 5000);
+    if (data?.gameCreateds) {
+      fetchGameStatuses();
+    }
+  }, [data]);
 
-    // Cleanup interval on unmount
-    return () => clearInterval(intervalId);
-  }, []);
+  if (loading) return <LoadingSpinner />;
+  if (error) return <div>{error.message}</div>;
 
-  const handleJoinGame = async (gameId: number) => {
-    setLoadingGameId(gameId); // Set the game ID as loading
+  const games = data?.gameCreateds || [];
+  const sortedGames = [...games].sort(
+    (a, b) => Number(b.gameId) - Number(a.gameId)
+  );
+
+  // Filter out games where the time has expired (timeLeft <= 0)
+  const filteredGames = sortedGames.filter((game) => {
+    const gameStatus = gameStatuses[game.gameId];
+    return gameStatus && gameStatus.timeLeft > 0; // Keep only active or pending games
+  });
+
+  const indexOfLastGame = currentPage * gamesPerPage;
+  const indexOfFirstGame = indexOfLastGame - gamesPerPage;
+  const currentGames = filteredGames.slice(indexOfFirstGame, indexOfLastGame);
+
+  const handleJoinGame = async (gameId: string) => {
+    setLoadingGameId(Number(gameId)); // Convert to number before updating the loadingGameId state
     setError(null);
     try {
       console.log(`Joining game ${gameId}...`);
-      await joinGame(gameId); // Call the function to join the game
+      await joinGame(Number(gameId)); // Convert the gameId to a number when passing to joinGame
       console.log(`Successfully joined game ${gameId}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error joining game:", err);
-      if (err instanceof Error) {
-        setError(`Failed to join game: ${err.message}`);
-      } else {
-        setError("An unknown error occurred while trying to join the game.");
-      }
+      setError(
+        err instanceof Error
+          ? `Failed to join game: ${err.message}`
+          : "An unknown error occurred while trying to join the game."
+      );
     } finally {
-      setLoadingGameId(null); // Reset loading state once done
+      setLoadingGameId(null);
     }
+  };
 
-    {
-      error && (
-        <div className="mb-6 bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400">
-          <p className="flex items-center gap-2">
-            <XCircle className="w-5 h-5" />
-            {error}
-          </p>
-        </div>
+  function formatTimeLeft(seconds: number): string {
+    const hours = Math.floor(seconds / 3600); // 1 hour = 3600 seconds
+    const minutes = Math.floor((seconds % 3600) / 60); // 1 minute = 60 seconds
+    const remainingSeconds = seconds % 60;
+
+    // Format the result as "hr:min:sec"
+    return `${hours}h ${minutes}m ${remainingSeconds}s`;
+  }
+
+  // Handle resolving a game
+  const handleResolveGame = async (gameId: string) => {
+    try {
+      console.log(`Resolving game ${gameId}...`);
+      await resolveGame(Number(gameId));
+      console.log(`Successfully resolved game ${gameId}`);
+    } catch (err: any) {
+      console.error("Error resolving game:", err);
+      setError(
+        err instanceof Error
+          ? `Failed to resolve game: ${err.message}`
+          : "Failed to resolve game: An unknown error occurred."
       );
     }
   };
 
-  const handleResolveGame = async (gameId: number) => {
-    try {
-      console.log(`Resolving game ${gameId}...`);
-      await resolveGame(gameId); // Call resolveGame function
-      console.log(`Successfully resolved game ${gameId}`);
-    } catch (err) {
-      console.error("Error resolving game:", err);
-      if (err instanceof Error) {
-        setError(`Failed to resolve game: ${err.message}`);
-      } else {
-        setError("Failed to resolve game: An unknown error occurred.");
-      }
-    }
+  // Handle claiming a reward
+  // const handleClaimReward = async (gameId: string) => {
+  //   try {
+  //     console.log(`Claiming reward for game ${gameId}...`);
+  //     await claimReward(gameId);
+  //     console.log(`Successfully claimed reward for game ${gameId}`);
+  //   } catch (err: any) {
+  //     console.error("Error claiming reward:", err);
+  //     setError(
+  //       err instanceof Error
+  //         ? `Failed to claim reward: ${err.message}`
+  //         : "Failed to claim reward: An unknown error occurred."
+  //     );
+  //   }
+  // };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
-
-  const handleClaimReward = async (gameId: number) => {
-    try {
-      console.log(`Claiming reward for game ${gameId}...`);
-      await claimReward(gameId); // Call claimReward function
-      console.log(`Successfully claimed reward for game ${gameId}`);
-    } catch (err) {
-      console.error("Error claiming reward:", err);
-      if (err instanceof Error) {
-        setError(`Failed to claim reward: ${err.message}`);
-      } else {
-        setError("Failed to claim reward: An unknown error occurred.");
-      }
-    }
-  };
-
-  const indexOfLastGame = currentPage * gamesPerPage;
-  const indexOfFirstGame = indexOfLastGame - gamesPerPage;
-  const currentGames = gameDetails.slice(indexOfFirstGame, indexOfLastGame);
-
-  const totalPages = Math.ceil(gameDetails.length / gamesPerPage);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div>{error}</div>;
 
   return (
-    <div className="p-6">
+    <div className="pl-6 pr-6">
       <div className="max-w-[1400px] mx-auto">
         {/* Display Error Message */}
-        {error && (
+        {errorMessage && (
           <div className="mb-6 bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400">
             <p className="flex items-center gap-2">
               <XCircle className="w-5 h-5" />
-              {error}
+              {errorMessage}
             </p>
           </div>
         )}
 
-        {/* Available Games Section Description */}
-        <div className="mb-6 text-center text-white font-semibold text-2xl">
-          <h2>Available Games</h2>
-          <p className="text-white/70"></p>
-        </div>
-
         {/* Table and other UI */}
-        {gameDetails.length === 0 ? (
+        {filteredGames?.length === 0 ? (
           <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl p-8 text-center">
             <GamepadIcon className="w-12 h-12 text-purple-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">
@@ -206,139 +196,108 @@ const Available = () => {
         ) : (
           <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-auto">
                 <thead>
                   <tr className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/10">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Game ID
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-6 py-4 text-sm font-semibold text-white">
                       Required Bet
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-6 py-4 text-sm font-semibold text-white">
                       Token Name
                     </th>
-                    {/* <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Game Completed
-                    </th> */}
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      P1
+                    <th className="px-6 py-4 text-sm font-semibold text-white">
+                      P1 Choice
                     </th>
-                    {/* <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Time
-                    </th> */}
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Actions
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-sm font-semibold text-white">
+                      Time Left
+                    </th>
+                    <th className="px-6 py-4  text-sm font-semibold text-white">
+                      Action
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
-                  {currentGames.map((game) => (
-                    <tr
-                      key={game.gameId}
-                      className="hover:bg-white/5 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Trophy className="w-4 h-4 text-yellow-400" />
-                          <span className="text-white font-semibold">
-                            {game.gameId}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Coins className="w-4 h-4 text-purple-400" />
-                          <span className="text-white/90">
-                            {game.betAmount}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {game.tokenName || "Unknown"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span className="text-white/90">
-                          {game.P1 ? "Heads" : "Tails"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => handleJoinGame(game.gameId)}
-                            disabled={
-                              game.isCompleted ||
-                              game.timeLeft <= 0 ||
-                              loadingGameId === game.gameId
-                            }
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                              game.isCompleted
-                                ? "bg-gray-500 cursor-not-allowed opacity-50"
-                                : game.timeLeft <= 0
-                                ? "bg-red-500 cursor-not-allowed opacity-50"
-                                : "bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 text-white font-medium"
-                            }`}
-                          >
-                            {loadingGameId === game.gameId ? (
-                              <span className="spinner-border spinner-border-sm"></span> // Show spinner while loading
-                            ) : (
-                              <>
-                                <ArrowRight className="w-4 h-4" />
-                                Join Game
-                              </>
-                            )}
-                          </button>
-
-                          {/* Resolve Game Button */}
-                          {!game.isCompleted && (
+                  {currentGames.map((game) => {
+                    const gameStatus = gameStatuses[game.gameId] || null;
+                    return (
+                      <tr key={game.id} className="bg-white/10">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {game.gameId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {weiToEther(game.betAmount)} {game.tokenSymbol}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {game.tokenName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {game.player1Choice ? "Head" : "Tail"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {gameStatus
+                            ? gameStatus.state === 0
+                              ? "Pending"
+                              : gameStatus.state === 1
+                              ? "Active"
+                              : gameStatus.state === 2
+                              ? "Expired"
+                              : gameStatus.state === 3
+                              ? "Completed"
+                              : "Invalid State"
+                            : "Loading..."}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {gameStatus
+                            ? gameStatus.timeLeft > 0
+                              ? formatTimeLeft(gameStatus.timeLeft)
+                              : "Expired"
+                            : "Loading..."}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
+                          {gameStatus && gameStatus.state === 1 ? (
                             <button
                               onClick={() => handleResolveGame(game.gameId)}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-all ${
-                                game.isCompleted
-                                  ? "bg-gray-500 cursor-not-allowed opacity-50"
-                                  : "bg-gradient-to-r from-green-400 to-blue-500 hover:bg-gradient-to-r hover:from-blue-500 hover:to-green-500"
-                              }`}
-                              disabled={game.isCompleted}
+                              className="text-white hover:text-white/90 px-3 py-2 bg-green-500 rounded-lg"
                             >
-                              Flip
+                              Resolve
                             </button>
-                          )}
-
-                          {/* Claim Reward Button */}
-                          {game.isCompleted && (
+                          ) : (
                             <button
-                              onClick={() => handleClaimReward(game.gameId)}
-                              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium transition-all hover:bg-gradient-to-r hover:from-orange-500 hover:to-yellow-500"
+                              onClick={() => handleJoinGame(game.gameId)}
+                              className="text-white hover:text-white/90 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
                             >
-                              Claim Reward
+                              {loadingGameId === Number(game.gameId)
+                                ? "Joining..."
+                                : "Join"}
                             </button>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20">
+
+            <div className="flex justify-between items-center p-4">
               <button
-                onClick={handlePreviousPage}
-                className="text-white disabled:opacity-50"
+                onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg"
               >
                 Previous
               </button>
-              <div className="text-white">
-                Page {currentPage} of {totalPages}
-              </div>
+              <span className="text-white">{`Page ${currentPage}`}</span>
               <button
-                onClick={handleNextPage}
-                className="text-white disabled:opacity-50"
-                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={indexOfLastGame >= games.length}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg"
               >
                 Next
               </button>
@@ -348,6 +307,6 @@ const Available = () => {
       </div>
     </div>
   );
-};
+}
 
-export default Available;
+export default GameList;
