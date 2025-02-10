@@ -44,66 +44,6 @@ async function setupContractWithSigner() {
   }
 }
 
-interface GameStatus {
-  state: number;
-  createdAt: number;
-  timeoutDuration: number;
-  timeLeft: number;
-}
-
-export async function getGameStatus(gameId: number): Promise<GameStatus> {
-  try {
-    const gameDetails = await publicContract.getFullGameDetails(gameId);
-
-    // Log the structure of the gameDetails to understand the types
-    console.log("gameDetails:", gameDetails);
-
-    let state = gameDetails[4]; // Assuming state is in position 4
-    let createdAt = gameDetails[6]; // Assuming createdAt is at index 6
-    let timeoutDuration = gameDetails[7]; // Assuming timeoutDuration is at index 7
-
-    // Log state, createdAt, and timeoutDuration types to inspect
-    console.log("state:", state, "Type:", typeof state);
-    console.log("createdAt:", createdAt, "Type:", typeof createdAt);
-    console.log(
-      "timeoutDuration:",
-      timeoutDuration,
-      "Type:",
-      typeof timeoutDuration
-    );
-
-    // Handle BigInt conversion
-    if (typeof state === "bigint") {
-      state = Number(state); // Convert BigInt to Number (if within safe range)
-    }
-
-    if (typeof createdAt === "bigint") {
-      createdAt = Number(createdAt); // Convert BigInt to Number (if within safe range)
-    }
-
-    if (typeof timeoutDuration === "bigint") {
-      timeoutDuration = Number(timeoutDuration); // Convert BigInt to Number (if within safe range)
-    }
-
-    // Calculate timeLeft (time until expiration)
-    const currentTime = Math.floor(Date.now() / 1000); // Get current time in seconds
-    const timeLeft = createdAt + timeoutDuration - currentTime;
-
-    // Construct game status object
-    const gameStatus: GameStatus = {
-      state: Number(state), // Ensure the state is a number
-      createdAt,
-      timeoutDuration,
-      timeLeft,
-    };
-
-    return gameStatus;
-  } catch (error) {
-    console.error("Error fetching game status:", error);
-    throw error;
-  }
-}
-
 // Define the GameDetails interface
 interface GameDetails {
   betAmount: string;
@@ -682,3 +622,63 @@ export const withdrawReward = async (gameId: number) => {
     alert("An error occurred. Check the console for details.");
   }
 };
+
+interface GameStatus {
+  state: number;
+  createdAt: number;
+  timeoutDuration: number;
+  timeLeft: number;
+}
+
+export async function getGameStatus(gameId: number): Promise<GameStatus> {
+  try {
+    const gameDetails = await publicContract.getFullGameDetails(gameId);
+
+    // Log the structure of the gameDetails to understand the types
+    console.log("gameDetails:", gameDetails);
+
+    let state = gameDetails[4]; // Assuming state is in position 4
+    let createdAt = gameDetails[6]; // Assuming createdAt is at index 6
+    let timeoutDuration = gameDetails[7]; // Assuming timeoutDuration is at index 7
+
+    // Log state, createdAt, and timeoutDuration types to inspect
+    console.log("state:", state, "Type:", typeof state);
+    console.log("createdAt:", createdAt, "Type:", typeof createdAt);
+    console.log(
+      "timeoutDuration:",
+      timeoutDuration,
+      "Type:",
+      typeof timeoutDuration
+    );
+
+    // Handle BigInt conversion
+    if (typeof state === "bigint") {
+      state = Number(state); // Convert BigInt to Number (if within safe range)
+    }
+
+    if (typeof createdAt === "bigint") {
+      createdAt = Number(createdAt); // Convert BigInt to Number (if within safe range)
+    }
+
+    if (typeof timeoutDuration === "bigint") {
+      timeoutDuration = Number(timeoutDuration); // Convert BigInt to Number (if within safe range)
+    }
+
+    // Calculate timeLeft (time until expiration)
+    const currentTime = Math.floor(Date.now() / 1000); // Get current time in seconds
+    const timeLeft = createdAt + timeoutDuration - currentTime;
+
+    // Construct game status object
+    const gameStatus: GameStatus = {
+      state: Number(state), // Ensure the state is a number
+      createdAt,
+      timeoutDuration,
+      timeLeft,
+    };
+
+    return gameStatus;
+  } catch (error) {
+    console.error("Error fetching game status:", error);
+    throw error;
+  }
+}
