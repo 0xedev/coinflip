@@ -102,3 +102,15 @@ export const GET_GAMES_RESOLVED = gql`
     }
   }
 `;
+
+// RESOLVED 
+export const GET_GAME_RESOLVED_BY_ID = gql`
+  query GetGameResolvedById($gameId: Bytes!) {
+    gameResolved(id: $gameId) {
+      id
+      gameId
+      winner
+      payout
+    }
+  }
+`;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@apollo/client";
-import { GET_AVAILABLE_GAMES } from "../client/queries";
+import { GET_AVAILABLE_GAMES, GET_GAME_RESOLVED_BY_ID } from "../client/queries";
 import { CircleDollarSign, XCircle, GamepadIcon } from "lucide-react";
 import { joinGame, resolveGame, claimReward, getGameStatus } from "../../../utils/contractFunction";
 import client from "../client/apollo-client";
@@ -15,12 +15,21 @@ interface Available {
   tokenSymbol: string;
 }
 
+// Define TypeScript types for the query response
+interface GameResolved {
+  gameId: string;
+  betAmount: string;
+  winner: string;
+  payout: string;
+}
+
 interface GameStatus {
   state: number;
   createdAt: number;
   timeoutDuration: number;
   timeLeft: number;
 }
+
 
 const weiToEther = (wei: string) => {
   const weiValue = BigInt(wei);
@@ -45,6 +54,7 @@ const LoadingSpinner = () => (
 );
 
 function GameList() {
+
   const { loading, error, data } = useQuery<{ gameCreateds: Available[] }>(GET_AVAILABLE_GAMES, {
     client,
   });
@@ -189,6 +199,8 @@ function GameList() {
                 <tbody className="divide-y divide-white/10">
                   {currentGames.map((game) => {
                     const gameStatus = gameStatuses[game.gameId] || null;
+
+                    console.log('gameStatus', gameStatus)
                     return (
                       <tr key={game.id} className="bg-white/10">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.gameId}</td>
