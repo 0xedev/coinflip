@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@apollo/client";
+import { Home } from "lucide-react"; // Import the Home icon
 import {
   GET_TOP_PLAYERS_BY_PAYOUT,
   GET_TOP_PLAYERS_BY_BET,
@@ -74,6 +75,11 @@ const Leaderboard = () => {
     }
   };
 
+  const handleHomeClick = () => {
+    // Add your home navigation logic here
+    window.location.href = "/";
+  };
+
   if (error)
     return (
       <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
@@ -87,7 +93,16 @@ const Leaderboard = () => {
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Leaderboard</h2>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleHomeClick}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Go to home"
+            >
+              <Home className="w-6 h-6 text-purple-500" />
+            </button>
+            <h2 className="text-2xl font-bold">Leaderboard</h2>
+          </div>
           <select
             className="px-4 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             value={tokenAddress}
@@ -109,7 +124,7 @@ const Leaderboard = () => {
                 onClick={() => setCategory(tab)}
                 className={`flex-1 px-4 py-2 text-center transition-colors ${
                   category === tab
-                    ? "bg-purple-500 text-white"
+                    ? "bg-purple-500 text-black" // Changed text color to black
                     : "bg-white text-gray-600 hover:bg-purple-50"
                 }`}
               >
