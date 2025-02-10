@@ -177,13 +177,13 @@ function GameList() {
                 <thead>
                   <tr className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/10">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">Game ID</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Required Bet</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Token Name</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">P1 Choice</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-white">Required Bet</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-white">Token Name</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-white">P1 Choice</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-white">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Time Left</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Action</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">Join</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-white">Time Left</th>
+                    <th className="px-6 py-4  text-sm font-semibold text-white">Action</th>
+                
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
