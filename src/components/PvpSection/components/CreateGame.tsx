@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { createGame, SUPPORTED_TOKENS } from "../../../utils/contractFunction";
-import { Coins, Loader2, Plus, AlertCircle, CheckCircle2 } from "lucide-react";
-
+import {
+  Coins,
+  Loader2,
+  Plus,
+  AlertCircle,
+  CheckCircle2,
+  PartyPopper,
+} from "lucide-react";
 import { ethers } from "ethers";
 import {
   publicProvider,
@@ -25,7 +31,7 @@ const CreateGame: React.FC = () => {
   const { address, isConnected } = useAppKitAccount();
   const [state, setState] = useState<CreateGameState>({
     player1Choice: false,
-    timeoutDuration: "3600", // Default 1 hour in seconds
+    timeoutDuration: "3600",
     betAmount: "",
     tokenAddress: SUPPORTED_TOKENS.STABLEAI,
     loading: false,
@@ -38,15 +44,12 @@ const CreateGame: React.FC = () => {
   const fetchTokenBalance = useCallback(async () => {
     if (!address || !state.tokenAddress || !isConnected) return;
 
-    console.log("Fetching token balance for address:", address);
-
     const tokenAbi = [
       "function balanceOf(address owner) view returns (uint256)",
       "function symbol() view returns (string)",
     ];
 
     try {
-      // Attempt with primary provider first
       const tokenContract = new ethers.Contract(
         state.tokenAddress,
         tokenAbi,
@@ -57,19 +60,13 @@ const CreateGame: React.FC = () => {
         tokenContract.symbol(),
       ]);
 
-      setState((prevState) => ({
-        ...prevState,
+      setState((prev) => ({
+        ...prev,
         tokenBalance: ethers.formatUnits(balance, 18),
         tokenSymbol: symbol,
       }));
-    } catch (primaryError) {
-      console.warn(
-        "Primary provider failed, attempting fallback...",
-        primaryError
-      );
-
+    } catch (error) {
       try {
-        // Attempt with fallback provider
         const fallbackTokenContract = new ethers.Contract(
           state.tokenAddress,
           tokenAbi,
@@ -80,15 +77,14 @@ const CreateGame: React.FC = () => {
           fallbackTokenContract.symbol(),
         ]);
 
-        setState((prevState) => ({
-          ...prevState,
+        setState((prev) => ({
+          ...prev,
           tokenBalance: ethers.formatUnits(balance, 18),
           tokenSymbol: symbol,
         }));
       } catch (fallbackError) {
-        console.error("Both providers failed:", fallbackError);
-        setState((prevState) => ({
-          ...prevState,
+        setState((prev) => ({
+          ...prev,
           error: "Failed to fetch token details",
         }));
       }
@@ -111,20 +107,12 @@ const CreateGame: React.FC = () => {
     return null;
   };
 
-  console.log("player1chioce", state.player1Choice);
-
   const handleCreateGame = async () => {
     const validationError = validateInput();
-    console.log(validationError);
 
     if (validationError) {
       setState((prev) => ({ ...prev, error: validationError }));
-
-      // Clear the error message after 1 second (1000 milliseconds)
-      setTimeout(() => {
-        setState((prev) => ({ ...prev, error: null }));
-      }, 1000);
-
+      setTimeout(() => setState((prev) => ({ ...prev, error: null })), 3000);
       return;
     }
 
@@ -147,15 +135,13 @@ const CreateGame: React.FC = () => {
         ...prev,
         success: "Game created successfully!",
         loading: false,
-        betAmount: "", // Reset bet amount after successful creation
+        betAmount: "",
       }));
 
-      // Clear the success message after 5 seconds (5000 milliseconds)
-      // setTimeout(() => {
-      //   setState((prev) => ({ ...prev, success: null }));
-      // }, 10000);
+      setTimeout(() => {
+        setState((prev) => ({ ...prev, success: null }));
+      }, 5000);
 
-      // Refresh token balance
       fetchTokenBalance();
     } catch (error: any) {
       setState((prev) => ({
@@ -163,176 +149,209 @@ const CreateGame: React.FC = () => {
         error: error.message || "Failed to create game",
         loading: false,
       }));
-
-      // Clear the error message after 1 second (1000 milliseconds)
-      setTimeout(() => {
-        setState((prev) => ({ ...prev, error: null }));
-      }, 1000);
+      setTimeout(() => setState((prev) => ({ ...prev, error: null })), 3000);
     }
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-2">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4">
-        <div className="flex items-center gap-3 mb-6">
-          <Coins className="w-8 h-8 text-indigo-600" />
-          <h2 className="text-2xl font-bold text-gray-800">Create New Game</h2>
-        </div>
-
-        <div className="space-y-4">
-          {/* Token Balance Card */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Available Balance</span>
-              <span className="font-medium text-gray-700">
-                {parseFloat(state.tokenBalance).toFixed(4)} {state.tokenSymbol}
-              </span>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4 flex items-center justify-center">
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-xl rounded-2xl">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Coins className="w-6 h-6 text-indigo-600" />
             </div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Create New Game
+            </h2>
           </div>
 
-          {/* Bet Amount Input */}
-          <div>
-            <label
-              htmlFor="betAmount"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Bet Amount
-            </label>
-            <div className="text-gray-700 relative">
-              <input
-                id="betAmount"
-                type="number"
-                step="0.000001"
-                min="0"
-                placeholder="0.00"
-                value={state.betAmount}
-                onChange={(e) =>
-                  setState((prev) => ({ ...prev, betAmount: e.target.value }))
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                {state.tokenSymbol}
-              </span>
+          <div className="space-y-6">
+            {/* Balance Display */}
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-indigo-600" />
+                  <span className="text-sm font-medium text-gray-600">
+                    Balance
+                  </span>
+                </div>
+                <span className="font-bold text-gray-900">
+                  {parseFloat(state.tokenBalance).toFixed(4)}{" "}
+                  {state.tokenSymbol}
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Token Selection */}
-          <div>
-            <label
-              htmlFor="token"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Select Token
-            </label>
-            <select
-              id="token"
-              value={state.tokenAddress}
-              onChange={(e) =>
-                setState((prev) => ({ ...prev, tokenAddress: e.target.value }))
-              }
-              className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-            >
-              {Object.entries(SUPPORTED_TOKENS).map(([key, value]) => (
-                <option key={key} value={value}>
-                  {key}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Bet Amount */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Bet Amount
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.000001"
+                  min="0"
+                  placeholder="0.00"
+                  value={state.betAmount}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setState((prev) => ({ ...prev, betAmount: e.target.value }))
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors pr-20"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                  {state.tokenSymbol}
+                </span>
+              </div>
+            </div>
 
-          {/* Timeout Duration */}
-          <div>
-            <label
-              htmlFor="timeout"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Game Timeout
-            </label>
-            <select
-              id="timeout"
-              value={state.timeoutDuration}
-              onChange={(e) =>
-                setState((prev) => ({
-                  ...prev,
-                  timeoutDuration: e.target.value,
-                }))
-              }
-              className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-            >
-              <option value="300">5 minutes</option>
-              <option value="3600">1 hour</option>
-              <option value="86400">24 hours</option>
-            </select>
-          </div>
-
-          {/* Player Choice */}
-          <div className="flex items-center gap-2">
-            <span className="ml-3 text-sm font-medium text-gray-700">
-              Tails
-            </span>
-
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={state.player1Choice}
-                onChange={(e) =>
+            {/* Token Selection */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Select Token
+              </label>
+              <select
+                value={state.tokenAddress}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   setState((prev) => ({
                     ...prev,
-                    player1Choice: e.target.checked,
+                    tokenAddress: e.target.value,
                   }))
                 }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-              <span className="ml-3 text-sm font-medium text-gray-700">
-                Heads
-              </span>
-            </label>
-          </div>
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              >
+                {Object.entries(SUPPORTED_TOKENS).map(([key, value]) => (
+                  <option key={key} value={value}>
+                    {key}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Create Game Button */}
-          <button
-            onClick={handleCreateGame}
-            disabled={state.loading || !isConnected}
-            className={`w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-white font-medium transition-colors ${
-              state.loading || !isConnected
-                ? "bg-indigo-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700"
-            }`}
-          >
-            {state.loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Creating Game...
-              </>
-            ) : (
-              <>
-                <Plus className="w-5 h-5" />
-                Create Game
-              </>
+            {/* Timeout Duration */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Game Timeout
+              </label>
+              <select
+                value={state.timeoutDuration}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setState((prev) => ({
+                    ...prev,
+                    timeoutDuration: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              >
+                <option value="300">5 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="86400">24 hours</option>
+              </select>
+            </div>
+
+            {/* Player Choice */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Your Choice
+              </label>
+              <div className="flex items-center justify-center gap-4 p-4 bg-gray-50 rounded-lg">
+                <button
+                  onClick={() =>
+                    setState((prev) => ({ ...prev, player1Choice: false }))
+                  }
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    !state.player1Choice
+                      ? "bg-indigo-600 text-white shadow-lg"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  Tails
+                </button>
+                <button
+                  onClick={() =>
+                    setState((prev) => ({ ...prev, player1Choice: true }))
+                  }
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    state.player1Choice
+                      ? "bg-indigo-600 text-white shadow-lg"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  Heads
+                </button>
+              </div>
+            </div>
+
+            {/* Create Game Button */}
+            <button
+              onClick={handleCreateGame}
+              disabled={state.loading || !isConnected}
+              className={`w-full h-12 rounded-lg flex items-center justify-center gap-2 text-white font-medium transition-all ${
+                state.loading || !isConnected
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
+              }`}
+            >
+              {state.loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Creating Game...</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-5 h-5" />
+                  <span>Create Game</span>
+                </>
+              )}
+            </button>
+
+            {/* Status Messages */}
+            {state.error && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-lg">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">{state.error}</p>
+              </div>
             )}
-          </button>
 
-          {/* Status Messages */}
-          {state.error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-              <p className="text-sm text-red-600">{state.error}</p>
-            </div>
-          )}
+            {state.success && (
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm animate-in fade-in">
+                <div className="bg-white rounded-2xl p-8 shadow-2xl transform animate-bounce-in">
+                  <div className="flex flex-col items-center gap-4 text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                      <PartyPopper className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Hurray! 🎉
+                    </h3>
+                    <p className="text-lg text-gray-600">
+                      Game created successfully!
+                    </p>
+                    <div className="flex gap-2 items-center mt-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      <span className="text-green-600">
+                        Your game is ready to play
+                      </span>
+                    </div>
 
-          {state.success && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <p className="text-sm text-green-600">{state.success}</p>
-            </div>
-          )}
-
-          {/* Help Text */}
+                    {/* Animated dots */}
+                    <div className="flex gap-1 mt-4">
+                      {[1, 2, 3, 4, 5].map((_, index) => (
+                        <div
+                          key={index}
+                          className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"
+                          style={{ animationDelay: `${index * 0.1}s` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      <div></div>
     </div>
   );
 };
