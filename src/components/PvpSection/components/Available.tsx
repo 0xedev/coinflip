@@ -1,25 +1,31 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_AVAILABLE_GAMES } from "../client/queries";
 import { CircleDollarSign, XCircle, GamepadIcon } from "lucide-react";
-import { joinGame, resolveGame, claimReward } from "../../../utils/contractFunction";
+import { joinGame, resolveGame, claimReward, getGameStatus } from "../../../utils/contractFunction";
 import client from "../client/apollo-client";
 
 interface Available {
   id: string;
   gameId: string;
   player1: string;
-  betAmount: string; // Assuming the bet amount is in Wei
+  betAmount: string;
   player1Choice: boolean;
   tokenName: string;
   tokenSymbol: string;
 }
 
-// Utility function to convert Wei to Ether
+interface GameStatus {
+  state: number;
+  createdAt: number;
+  timeoutDuration: number;
+  timeLeft: number;
+}
+
 const weiToEther = (wei: string) => {
   const weiValue = BigInt(wei);
-  const etherValue = Number(weiValue) / 1e18; // Convert Wei to Ether (1 Ether = 10^18 Wei)
-  return etherValue.toFixed(0); // Return with 4 decimal places
+  const etherValue = Number(weiValue) / 1e18;
+  return etherValue.toFixed(0);
 };
 
 const LoadingSpinner = () => (
@@ -49,26 +55,49 @@ function GameList() {
   const [currentPage, setCurrentPage] = useState(1);
   const gamesPerPage = 5;
 
+  const [gameStatuses, setGameStatuses] = useState<Record<string, GameStatus>>({});
+
+  useEffect(() => {
+    const fetchGameStatuses = async () => {
+      const statusMap: Record<string, GameStatus> = {};
+      for (const game of data?.gameCreateds || []) {
+        try {
+          const status = await getGameStatus(Number(game.gameId));
+          statusMap[game.gameId] = status;
+        } catch (error) {
+          console.error("Error fetching status for game:", game.gameId, error);
+        }
+      }
+      setGameStatuses(statusMap);
+    };
+
+    if (data?.gameCreateds) {
+      fetchGameStatuses();
+    }
+  }, [data]);
+
   if (loading) return <LoadingSpinner />;
   if (error) return <div>{error.message}</div>;
 
   const games = data?.gameCreateds || [];
-
-  // Sort games by gameId in descending order
   const sortedGames = [...games].sort((a, b) => Number(b.gameId) - Number(a.gameId));
 
-  // Pagination Logic
+  // Filter out games where the time has expired (timeLeft <= 0)
+  const filteredGames = sortedGames.filter((game) => {
+    const gameStatus = gameStatuses[game.gameId];
+    return gameStatus && gameStatus.timeLeft > 0; // Keep only active or pending games
+  });
+
   const indexOfLastGame = currentPage * gamesPerPage;
   const indexOfFirstGame = indexOfLastGame - gamesPerPage;
-  const currentGames = sortedGames.slice(indexOfFirstGame, indexOfLastGame);
+  const currentGames = filteredGames.slice(indexOfFirstGame, indexOfLastGame);
 
-  // Handle joining a game
   const handleJoinGame = async (gameId: string) => {
-    setLoadingGameId(Number(gameId)); 
+    setLoadingGameId(Number(gameId));  // Convert to number before updating the loadingGameId state
     setError(null); 
     try {
       console.log(`Joining game ${gameId}...`);
-      await joinGame(gameId);
+      await joinGame(Number(gameId));  // Convert the gameId to a number when passing to joinGame
       console.log(`Successfully joined game ${gameId}`);
     } catch (err: any) {
       console.error("Error joining game:", err);
@@ -77,12 +106,21 @@ function GameList() {
       setLoadingGameId(null); 
     }
   };
+  
+  function formatTimeLeft(seconds: number): string {
+    const hours = Math.floor(seconds / 3600); // 1 hour = 3600 seconds
+    const minutes = Math.floor((seconds % 3600) / 60); // 1 minute = 60 seconds
+    const remainingSeconds = seconds % 60;
+  
+    // Format the result as "hr:min:sec"
+    return `${hours}h ${minutes}m ${remainingSeconds}s`;
+  }
 
   // Handle resolving a game
   const handleResolveGame = async (gameId: string) => {
     try {
       console.log(`Resolving game ${gameId}...`);
-      await resolveGame(gameId);
+      await resolveGame(Number(gameId));
       console.log(`Successfully resolved game ${gameId}`);
     } catch (err: any) {
       console.error("Error resolving game:", err);
@@ -121,7 +159,7 @@ function GameList() {
         )}
 
         {/* Table and other UI */}
-        {games?.length === 0 ? (
+        {filteredGames?.length === 0 ? (
           <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl p-8 text-center">
             <GamepadIcon className="w-12 h-12 text-purple-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">
@@ -133,41 +171,70 @@ function GameList() {
             </p>
           </div>
         ) : (
-<div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl overflow-hidden">
-  <div className="overflow-x-auto">
-    <table className="w-full table-auto">
-      <thead>
-        <tr className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/10">
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">Game ID</th>
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">Required Bet</th>
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">Token Name</th>
-          <th className="px-6 py-4 text-left text-sm font-semibold text-white">P1 Choice</th>
-          <th className="px-6 py-4 text-center text-sm font-semibold text-white">Join</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-white/10">
-        {currentGames?.map((game) => (
-          <tr key={game.id} className="bg-white/10">
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.gameId}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{weiToEther(game.betAmount)} {game.tokenSymbol}</td> 
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.tokenName}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.player1Choice ? "Head" : "Tail"}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
-              <button
-                onClick={() => handleJoinGame(game.gameId)}
-                className="text-white hover:text-white/90 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
-              >
-                {loadingGameId === Number(game.gameId) ? "Joining..." : "Join"}
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/10">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Game ID</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Required Bet</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Token Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">P1 Choice</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Time Left</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">Action</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">Join</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {currentGames.map((game) => {
+                    const gameStatus = gameStatuses[game.gameId] || null;
+                    return (
+                      <tr key={game.id} className="bg-white/10">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.gameId}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{weiToEther(game.betAmount)} {game.tokenSymbol}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.tokenName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{game.player1Choice ? "Head" : "Tail"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {gameStatus ? (
+                            gameStatus.state === 0 ? "Pending" :
+                            gameStatus.state === 1 ? "Active" :
+                            gameStatus.state === 2 ? "Expired" :
+                            gameStatus.state === 3 ? "Completed" :
+                            "Invalid State"
+                          ) : "Loading..."}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                          {gameStatus ? (
+                            gameStatus.timeLeft > 0 
+                              ? formatTimeLeft(gameStatus.timeLeft) 
+                              : "Expired"
+                          ) : "Loading..."}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
+                          {gameStatus && gameStatus.state === 1 ? (
+                            <button
+                              onClick={() => handleResolveGame(game.gameId)}
+                              className="text-white hover:text-white/90 px-3 py-2 bg-green-500 rounded-lg"
+                            >
+                              Resolve
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleJoinGame(game.gameId)}
+                              className="text-white hover:text-white/90 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
+                            >
+                              {loadingGameId === Number(game.gameId) ? "Joining..." : "Join"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-
-            {/* Pagination */}
             <div className="flex justify-between items-center p-4">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}

@@ -104,10 +104,15 @@ const MyGame = () => {
   };
 
   const getTokenName = (tokenAddress: string) => {
-    // Use keyof typeof to restrict the key to be one of the valid tokens
-    const tokenName = Object.keys(SUPPORTED_TOKENS).find(
-      (key) => SUPPORTED_TOKENS[key as keyof typeof SUPPORTED_TOKENS] === tokenAddress
-    );
+    console.log("Looking for token address:", tokenAddress);
+    
+    const tokenName = Object.keys(SUPPORTED_TOKENS).find((key) => {
+      const storedTokenAddress = SUPPORTED_TOKENS[key as keyof typeof SUPPORTED_TOKENS];
+      console.log(`Comparing: ${storedTokenAddress} with ${tokenAddress}`);
+      return storedTokenAddress.toLowerCase() === tokenAddress.toLowerCase(); // Case-insensitive comparison
+    });
+  
+    console.log("Found token:", tokenName);
     return tokenName || "Unknown Token";
   };
   
