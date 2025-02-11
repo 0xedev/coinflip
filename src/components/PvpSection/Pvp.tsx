@@ -43,7 +43,7 @@ const Pvp = () => {
               </div>
               
               <div className="flex items-center gap-2 sm:gap-6">
-                <appkit-connect-button
+                <appkit-button
                   size="sm"
                 />
                 

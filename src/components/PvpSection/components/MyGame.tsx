@@ -139,6 +139,12 @@ const MyGame = () => {
       icon: Trophy,
       count: resolvedData?.gameResolveds.length ?? 0,
     },
+    {
+      id: "joined",
+      label: "Joined",
+      icon: Users,
+      count: joinedData?.gameJoineds.length ?? 0,
+    },
   ] as const;
 
   return (
@@ -148,8 +154,9 @@ const MyGame = () => {
         <div className="flex items-center">
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold">
-              {address ? address[2] : "?"}
+              {address ? address[3] : "?"}
             </div>
+            <span className="text-black">{formatAddress(address)}</span>
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
               <ArrowUpRight className="w-4 h-4 text-white" />
             </div>
