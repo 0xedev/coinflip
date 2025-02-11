@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { Trophy, Users, Clock, ArrowUpRight } from "lucide-react";
+import { Trophy, Users, Clock, ArrowUpRight, Gift } from "lucide-react";
 
 // GraphQL queries remain the same
 const GET_GAMES_CREATED = gql`
@@ -64,7 +64,7 @@ const MyGame = () => {
     GIRTH: "0xa97d71a5fdf906034d9d121ed389665427917ee4",
   };
 
-  const  {address}  = useAppKitAccount()
+  const  {address}  = useAppKitAccount ();
   const [selectedTab, setSelectedTab] = useState<
     "created" | "joined" | "resolved"
   >("created");
@@ -140,9 +140,9 @@ const MyGame = () => {
       count: resolvedData?.gameResolveds.length ?? 0,
     },
     {
-      id: "joined",
-      label: "Joined",
-      icon: Users,
+      id: "claimed",
+      label: "Claimed",
+      icon: Gift,
       count: joinedData?.gameJoineds.length ?? 0,
     },
   ] as const;
@@ -153,16 +153,16 @@ const MyGame = () => {
       <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-6">
         <div className="flex items-center">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-black text-xl font-bold">
               {address ? address[3] : "?"}
             </div>
-            <span className="text-black">{formatAddress(address)}</span>
+            
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
               <ArrowUpRight className="w-4 h-4 text-white" />
             </div>
           </div>
           <div className="ml-4">
-            <h2 className="text-xl font-bold">{formatAddress(address)}</h2>
+            <h2 className="text-xl text-black font-bold">{formatAddress(address)}</h2>
             <div className="flex items-center mt-1 text-gray-600">
               <span className="bg-gray-100 rounded-full px-3 py-1 text-sm">
                 Active Player 🎮
@@ -218,9 +218,24 @@ const MyGame = () => {
                   </>
                 )}
                 {selectedTab === "resolved" && (
+                  <>
                   <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Payout
                   </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Claim
+                </th>
+</>
+                )}
+                {selectedTab === "joined" && (
+                  <>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Time
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Claim
+                </th>
+</>
                 )}
               </tr>
             </thead>
@@ -272,7 +287,7 @@ const MyGame = () => {
                   </tr>
                 ) : (
                   joinedData?.gameJoineds.map((game) => (
-                    <tr key={game.gameId} className="hover:bg-gray-50">
+                    <tr key={game.gameId} className="text-black  hover:bg-gray-50">
                       <td className="px-6 py-4 font-medium">{game.gameId}</td>
                       <td className="px-6 py-4">
                         {weiToEther(game.betAmount)}
