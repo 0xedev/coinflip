@@ -196,7 +196,7 @@ function GameList() {
                           {gameStatus ? (
                             gameStatus.state === 0 ? "Pending" :
                             gameStatus.state === 1 ? "Active" :
-                            gameStatus.state === 2 ? "Expired" :
+                            gameStatus.state === 2 ? "Claim" :
                             gameStatus.state === 3 ? "Completed" :
                             "Invalid State"
                           ) : "Loading..."}
