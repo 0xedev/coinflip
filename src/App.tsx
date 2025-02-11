@@ -46,12 +46,16 @@ const PvPSection = () => {
 export function App() {
   return (
     <ApolloProvider client={client}>
+      <WagmiProvider config={wagmiAdapter.wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/pvp/*" element={<PvPSection />} />
         </Routes>
       </Router>
+      </QueryClientProvider>
+      </WagmiProvider>
     </ApolloProvider>
   );
 }
