@@ -5,7 +5,7 @@ import {
   joinGame,
   getTimeLeftToExpire,
   resolveGame,
-  claimReward,
+  claimRewards,
 } from "../utils/contractFunction";
 import {
   GamepadIcon,
@@ -139,7 +139,7 @@ const Available = () => {
   const handleClaimReward = async (gameId: number) => {
     try {
       console.log(`Claiming reward for game ${gameId}...`);
-      await claimReward(gameId); // Call claimReward function
+      await claimRewards(gameId); // Call claimReward function
       console.log(`Successfully claimed reward for game ${gameId}`);
     } catch (err) {
       console.error("Error claiming reward:", err);

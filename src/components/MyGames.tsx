@@ -4,7 +4,7 @@ import {
   getGameIdCounter,
   getGameDetails,
   cancelGame,
-  claimReward,
+  claimRewards,
 } from "../utils/contractFunction";
 
 // Define GameDetails interface for better type safety
@@ -88,7 +88,7 @@ const MyGamesSection = () => {
   // Handle reward claiming
   const handleClaimReward = async (gameId: number) => {
     try {
-      await claimReward(gameId);
+      await claimRewards(gameId);
       alert(`Reward for game ${gameId} claimed successfully.`);
       await fetchUserAddressAndGames(); // Refresh games without full reload
     } catch (error) {
