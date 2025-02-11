@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { Swords, Bot, Coins } from "lucide-react";
+import { useDisconnect, useAppKit, useAppKitNetwork  } from '@reown/appkit/react'
 
 const HomePage = () => {
+  const { open } = useAppKit();
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-black">
       {/* Animated background elements */}
@@ -33,8 +36,8 @@ const HomePage = () => {
               FlipIt
             </h1>
           </div>
-          <div>
-            
+          <div className="red">
+<button onClick={() => open()}>Open</button>
           </div>
         </div>
       </header>
