@@ -34,9 +34,7 @@ const HomePage = () => {
             </h1>
           </div>
           <div>
-            <button>
-            <appkit-connect-button/>
-            </button>
+           
           
           </div>
         </div>
