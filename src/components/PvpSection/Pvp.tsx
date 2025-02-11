@@ -41,6 +41,11 @@ const Pvp = () => {
                   FlipIt PVP
                 </h1>
               </div>
+              
+            <appkit-connect-button
+            size="sm"
+            />
+            
               <Link to="/">
                 <button className="flex items-center space-x-2 px-4 py-2 rounded-lg text-purple-200 hover:bg-purple-800/50 transition-all duration-300">
                   <Home className="w-4 h-4" />

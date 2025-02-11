@@ -34,7 +34,10 @@ const HomePage = () => {
             </h1>
           </div>
           <div>
-          <appkit-button />
+            <button>
+            <appkit-connect-button/>
+            </button>
+          
           </div>
         </div>
       </header>
