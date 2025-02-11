@@ -270,9 +270,9 @@ export const resolveGame = async (gameId: number) => {
   }
 };
 //claimReward an existing game
-export const claimReward = async (gameId: number) => {
+export const claimRewards = async (gameId: number) => {
   try {
-    console.log("Attempting to join game with ID:", gameId);
+    console.log("Attempting to claim rewards for game ID:", gameId);
 
     // Set up contract with signer
     const { signer, contract } = await setupContractWithSigner();
@@ -284,72 +284,32 @@ export const claimReward = async (gameId: number) => {
     const game = await contract.games(gameId);
     console.log("Fetched game details:", game);
 
-    // Check if the game has already been completed
-    if (game.isCompleted) {
-      console.log(`Game with ID ${gameId} has already been completed.`);
-      alert("Game has already been completed.");
+    // Check if the game is completed before claiming
+    if (!game.isCompleted) {
+      console.log(`Game with ID ${gameId} is not yet resolved.`);
+      alert("You can only claim rewards after the game is resolved.");
       return;
     }
 
-    // Create token contract instance
-    const tokenContract = new ethers.Contract(
-      game.tokenAddress,
-      [
-        "function approve(address spender, uint256 amount) public returns (bool)",
-        "function balanceOf(address owner) public view returns (uint256)",
-      ],
-      signer
-    );
-
-    // Step 1: Check Player 2's balance to make sure they have enough tokens
-    const balance = await tokenContract.balanceOf(await signer.getAddress());
-    console.log("Player balance main:", balance);
-
-    // Fetch the player's balance using the provider
-    const playerAddress = await signer.getAddress();
-    console.log("Player address:", playerAddress);
-
-    const playerBalance = await signer.provider.getBalance(playerAddress);
-    console.log("Player balance:", playerBalance.toString());
-
-    console.log("game.betAmount:", game.betAmount);
-
-    if (balance < game.betAmount) {
-      console.log(`Player does not have enough balance to join the game.`);
-      alert("You do not have enough balance to join the game.");
-      return;
-    }
-
-    // Step 2: Approve the contract to spend the tokens
-    const approveTx = await tokenContract.approve(ADDRESS, game.betAmount);
-    await approveTx.wait();
-    console.log("Token approved successfully.");
-
-    // Step 3: Get the current nonce
+    // Step 1: Get the current nonce
     const currentNonce = await signer.getNonce();
     console.log("Current nonce:", currentNonce);
 
-    // Send the transaction to join the game
-    const tx = await contract.joinGame(gameId, { nonce: currentNonce });
-
-    const currentTime = Math.floor(Date.now() / 1000); // Convert to seconds
-    const timeElapsed = currentTime - tx.startTime;
-
-    if (timeElapsed < 20) {
-      alert(`Wait for ${20 - timeElapsed} more seconds before joining.`);
-      return;
-    }
-    const receipt = await tx.wait();
+    // Step 2: Call the claimRewards function
+    const tx = await contract.claimRewards(gameId, { nonce: currentNonce });
     console.log("Transaction sent! Hash:", tx.hash);
+
+    // Step 3: Wait for the transaction to be confirmed
+    const receipt = await tx.wait();
     if (receipt.status === 1) {
-      console.log(`Successfully joined game with ID: ${gameId}`);
-      alert(`Successfully joined game with ID: ${gameId}`);
+      console.log(`Successfully claimed rewards for game ID: ${gameId}`);
+      alert(`Successfully claimed rewards for game ID: ${gameId}`);
     } else {
-      console.log(`Transaction failed for Game ID: ${gameId}`);
-      alert(`Transaction failed for Game ID: ${gameId}`);
+      console.log(`Transaction failed for claiming rewards on Game ID: ${gameId}`);
+      alert(`Transaction failed for claiming rewards on Game ID: ${gameId}`);
     }
   } catch (error) {
-    console.error("Error joining game:", error);
+    console.error("Error claiming rewards:", error);
     alert("An error occurred. Check the console for details.");
   }
 };

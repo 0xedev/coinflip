@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_AVAILABLE_GAMES } from "../client/queries";
 import { CircleDollarSign, XCircle, GamepadIcon } from "lucide-react";
-import { joinGame, resolveGame,  getGameStatus } from "../../../utils/contractFunction";
+import { joinGame, resolveGame, claimRewards, getGameStatus } from "../../../utils/contractFunction";
 import client from "../client/apollo-client";
 
 interface Available {
@@ -133,7 +133,18 @@ function GameList() {
     }
   };
 
- 
+  // Handle resolving a game
+  const handleClaimGame = async (gameId: string) => {
+    try {
+      console.log(`Claiming rewards for game ${gameId}...`);
+      await claimRewards(Number(gameId));
+      console.log(`Successfully claimed rewards for game ${gameId}`);
+    } catch (err: any) {
+      console.error("Error claiming rewards:", err);
+      setError(err instanceof Error ? `Failed to claim rewards: ${err.message}` : "Failed to claim rewards: An unknown error occurred.");
+    }
+  };
+  
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -178,7 +189,7 @@ function GameList() {
                     <th className="px-6 py-4 text-center text-sm font-semibold text-white">Status</th>
                     <th className="px-6 py-4 text-sm font-semibold text-white">Time Left</th>
                     <th className="px-6 py-4  text-sm font-semibold text-white">Action</th>
-                
+                    <th className="px-6 py-4  text-sm font-semibold text-white">Claim</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
@@ -211,20 +222,36 @@ function GameList() {
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
                           {gameStatus && gameStatus.state === 1 ? (
                             <button
-                              onClick={() => handleResolveGame(game.gameId)}
+                              onClick={() => handleResolveGame(game.gameId)
+                                
+                              } 
                               className="text-white hover:text-white/90 px-3 py-2 bg-green-500 rounded-lg"
                             >
                               Resolve
                             </button>
                           ) : (
                             <button
-                              onClick={() => handleJoinGame(game.gameId)}
-                              className="text-white hover:text-white/90 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
-                            >
-                              {loadingGameId === Number(game.gameId) ? "Joining..." : "Join"}
-                            </button>
+                            onClick={() => handleJoinGame(game.gameId)}
+                            disabled={gameStatus?.state === 2}  // Ensure gameStatus is not undefined and check if state is 2
+                            className="text-white hover:text-white/90 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
+                          >
+                            {loadingGameId === Number(game.gameId) ? "Joining..." : "Join"}
+                          </button>
+                          
                           )}
-                        </td>
+                        </td >
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
+  {/* Claim Button (Only enabled when gameStatus.state is "Claim") */}
+  {gameStatus.state === 2 && (
+    <button 
+      onClick={() => handleClaimGame(game.gameId)}  
+      className="text-white hover:text-white/90 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"
+    >
+      Claim
+    </button>
+  )}
+</td>
+
                       </tr>
                     );
                   })}
