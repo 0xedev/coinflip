@@ -87,9 +87,9 @@ const Leaderb = () => {
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Leaderboard</h2>
+          <h2 className="text-2xl text-black font-bold">Leaderboard</h2>
           <select
-            className="px-4 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
             value={tokenAddress}
             onChange={(e) => setTokenAddress(e.target.value)}
           >
@@ -137,7 +137,7 @@ const Leaderb = () => {
               return (
                 <div
                   key={index}
-                  className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                  className={`text-black flex items-center justify-between p-4 rounded-lg transition-colors ${
                     index < 3
                       ? "bg-gradient-to-r from-purple-50 to-pink-50"
                       : "bg-gray-50"
