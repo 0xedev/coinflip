@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
-import { useAppKitAccount } from '@reown/appkit/react';
+import { useAppKitAccount } from "@reown/appkit/react";
+import { Trophy, Users, Clock, ArrowUpRight } from "lucide-react";
 
+// GraphQL queries remain the same
 const GET_GAMES_CREATED = gql`
   query GetGamesCreated($playerAddress: Bytes!) {
     gameCreateds(where: { player1: $playerAddress }) {
@@ -32,7 +34,7 @@ const GET_GAMES_RESOLVED = gql`
   }
 `;
 
-// Define TypeScript types for game data
+// TypeScript interfaces
 interface GameCreated {
   gameId: string;
   betAmount: string;
@@ -52,7 +54,6 @@ interface GameResolved {
 }
 
 const MyGame = () => {
-
   const SUPPORTED_TOKENS = {
     STABLEAI: "0x07F41412697D14981e770b6E335051b1231A2bA8",
     DIG: "0x208561379990f106E6cD59dDc14dFB1F290016aF",
@@ -63,168 +64,245 @@ const MyGame = () => {
     GIRTH: "0xa97d71a5fdf906034d9d121ed389665427917ee4",
   };
 
-  const { address } = useAppKitAccount();
+  const  address  = '0x2f6160aB362D2C79f3C27D43Ba29eD770250165A'
+  const [selectedTab, setSelectedTab] = useState<
+    "created" | "joined" | "resolved"
+  >("created");
 
+  const { data: createdData, loading: loadingCreated } = useQuery<{
+    gameCreateds: GameCreated[];
+  }>(GET_GAMES_CREATED, {
+    variables: { playerAddress: address },
+    skip: !address,
+  });
 
-  const [selectedTab, setSelectedTab] = useState<"created" | "joined" | "resolved">("created");
+  const { data: joinedData, loading: loadingJoined } = useQuery<{
+    gameJoineds: GameJoined[];
+  }>(GET_GAMES_JOINED, {
+    variables: { playerAddress: address },
+    skip: !address,
+  });
 
+  const { data: resolvedData, loading: loadingResolved } = useQuery<{
+    gameResolveds: GameResolved[];
+  }>(GET_GAMES_RESOLVED, {
+    variables: { playerAddress: address },
+    skip: !address,
+  });
 
-
-  // Wait until address is available before making queries
-  if (!address) {
-    return (
-      <div>Loading...</div> // Show a loading message until the address is available
-    );
-  }
-  const { data: createdData, loading: loadingCreated } = useQuery<{ gameCreateds: GameCreated[] }>(
-    GET_GAMES_CREATED,
-    { variables: { playerAddress: address} }
-  );
-
-  const { data: joinedData, loading: loadingJoined } = useQuery<{ gameJoineds: GameJoined[] }>(
-    GET_GAMES_JOINED,
-    { variables: { playerAddress: address } }
-  );
-
-  const { data: resolvedData, loading: loadingResolved } = useQuery<{ gameResolveds: GameResolved[] }>(
-    GET_GAMES_RESOLVED,
-    { variables: {playerAddress: address} }
-  );
-
-  // Utility function to convert Wei to Ether
-  const weiToEther = (wei: string) => {
+  const weiToEther = (wei: string): string => {
     const weiValue = BigInt(wei);
-    const etherValue = Number(weiValue) / 1e18; // Convert Wei to Ether (1 Ether = 10^18 Wei)
-    return etherValue.toFixed(0); // Return with 4 decimal places
+    const etherValue = Number(weiValue) / 1e18;
+    return etherValue.toFixed(0);
   };
 
-  // Utility function to format the player address
-  const formatAddress = (address: string) => {
+  const formatAddress = (address: string): string => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
-  const getTokenName = (tokenAddress: string) => {
-    console.log("Looking for token address:", tokenAddress);
-    
-    const tokenName = Object.keys(SUPPORTED_TOKENS).find((key) => {
-      const storedTokenAddress = SUPPORTED_TOKENS[key as keyof typeof SUPPORTED_TOKENS];
-      console.log(`Comparing: ${storedTokenAddress} with ${tokenAddress}`);
-      return storedTokenAddress.toLowerCase() === tokenAddress.toLowerCase(); // Case-insensitive comparison
-    });
-  
-    console.log("Found token:", tokenName);
+  const getTokenName = (tokenAddress: string): string => {
+    const tokenName = Object.keys(SUPPORTED_TOKENS).find(
+      (key) =>
+        SUPPORTED_TOKENS[key as keyof typeof SUPPORTED_TOKENS].toLowerCase() ===
+        tokenAddress.toLowerCase()
+    );
     return tokenName || "Unknown Token";
   };
-  
 
-  // Log data to console for debugging
-  useEffect(() => {
-    console.log('Created Games Data:', createdData);
-    console.log('Joined Games Data:', joinedData);
-    console.log('Resolved Games Data:', resolvedData);
-  }, [createdData, joinedData, resolvedData]);
+  if (!address) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Connecting wallet...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const tabs = [
+    {
+      id: "created",
+      label: "Created",
+      icon: Clock,
+      count: createdData?.gameCreateds.length ?? 0,
+    },
+    {
+      id: "joined",
+      label: "Joined",
+      icon: Users,
+      count: joinedData?.gameJoineds.length ?? 0,
+    },
+    {
+      id: "resolved",
+      label: "Resolved",
+      icon: Trophy,
+      count: resolvedData?.gameResolveds.length ?? 0,
+    },
+  ] as const;
 
   return (
-    <div className="bg-background dark:bg-background dark:text-primary-foreground p-4 rounded-lg shadow-md w-full">
-      <div className="flex items-center mb-4">
-        <img className="w-12 h-12 rounded-full mr-3" src="https://placehold.co/48x48" alt="User Avatar" />
-        <div>
-          <h2 className="text-lg font-semibold">{formatAddress(address ?? "Unknown address")}</h2>
-          <span className="text-muted-foreground">Player balance💰 0</span>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-6">
+        <div className="flex items-center">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold">
+              {address ? address[2] : "?"}
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+              <ArrowUpRight className="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <div className="ml-4">
+            <h2 className="text-xl font-bold">{formatAddress(address)}</h2>
+            <div className="flex items-center mt-1 text-gray-600">
+              <span className="bg-gray-100 rounded-full px-3 py-1 text-sm">
+                Active Player 🎮
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex justify-between mb-2">
-        <button
-          className={`px-4 py-2 font-medium ${selectedTab === "created" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-500"}`}
-          onClick={() => setSelectedTab("created")}
-        >
-          Created
-        </button>
-        <button
-          className={`px-4 py-2 font-medium ${selectedTab === "joined" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-500"}`}
-          onClick={() => setSelectedTab("joined")}
-        >
-          Joined
-        </button>
-        <button
-          className={`px-4 py-2 font-medium ${selectedTab === "resolved" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-500"}`}
-          onClick={() => setSelectedTab("resolved")}
-        >
-          Resolved
-        </button>
+      {/* Tabs */}
+      <div className="border-b">
+        <div className="flex px-4">
+          {tabs.map(({ id, label, icon: Icon, count }) => (
+            <button
+              key={id}
+              onClick={() => setSelectedTab(id as typeof selectedTab)}
+              className={`flex items-center space-x-2 px-6 py-4 border-b-2 font-medium transition-colors relative ${
+                selectedTab === id
+                  ? "border-purple-500 text-purple-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span>{label}</span>
+              <span className="ml-2 bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs">
+                {count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Table */}
-      <table className="w-full text-left">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="py-2 text-muted-foreground">GameId</th>
-            <th className="py-2 text-muted-foreground">BetAmount</th>
-            {selectedTab === "created" && <th className="py-2 text-muted-foreground">Player1Choice</th>}
-            {selectedTab === "created" && <th className="py-2 text-muted-foreground">TokenName</th>}
-            {selectedTab === "resolved" && <th className="py-2 text-muted-foreground">Payout</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {/* Render Created Games */}
-          {selectedTab === "created" &&
-            (loadingCreated ? (
-              <tr>
-                <td colSpan={4} className="text-center">
-                  Loading Created Games...
-                </td>
+      {/* Content */}
+      <div className="p-6">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left bg-gray-50">
+                <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Game ID
+                </th>
+                <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Bet Amount
+                </th>
+                {selectedTab === "created" && (
+                  <>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Choice
+                    </th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Token
+                    </th>
+                  </>
+                )}
+                {selectedTab === "resolved" && (
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payout
+                  </th>
+                )}
               </tr>
-            ) : (
-              createdData?.gameCreateds.map((game) => (
-                <tr key={game.gameId} className="border-b border-border">
-                  <td className="py-2">{game.gameId}</td>
-                  <td className="py-2">{weiToEther(game.betAmount)}</td>
-                  <td className="py-2">{game.player1Choice ? "Head" : "Tail"}</td>
-                  <td className="py-2">{getTokenName(game.tokenAddress)}</td>
-                </tr>
-              ))
-            ))}
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {selectedTab === "created" &&
+                (loadingCreated ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      Loading created games...
+                    </td>
+                  </tr>
+                ) : (
+                  createdData?.gameCreateds.map((game) => (
+                    <tr key={game.gameId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium">{game.gameId}</td>
+                      <td className="px-6 py-4">
+                        {weiToEther(game.betAmount)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-sm ${
+                            game.player1Choice
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-purple-100 text-purple-800"
+                          }`}
+                        >
+                          {game.player1Choice ? "Head" : "Tail"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {getTokenName(game.tokenAddress)}
+                      </td>
+                    </tr>
+                  ))
+                ))}
 
-          {/* Render Joined Games */}
-          {selectedTab === "joined" &&
-            (loadingJoined ? (
-              <tr>
-                <td colSpan={4} className="text-center">
-                  Loading Joined Games...
-                </td>
-              </tr>
-            ) : (
-              joinedData?.gameJoineds.map((game) => (
-                <tr key={game.gameId} className="border-b border-border">
-                  <td className="py-2">{game.gameId}</td>
-                  <td className="py-2">{weiToEther(game.betAmount)}</td>
-                  <td className="py-2">-</td>
-                  <td className="py-2">-</td>
-                </tr>
-              ))
-            ))}
+              {selectedTab === "joined" &&
+                (loadingJoined ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      Loading joined games...
+                    </td>
+                  </tr>
+                ) : (
+                  joinedData?.gameJoineds.map((game) => (
+                    <tr key={game.gameId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium">{game.gameId}</td>
+                      <td className="px-6 py-4">
+                        {weiToEther(game.betAmount)}
+                      </td>
+                    </tr>
+                  ))
+                ))}
 
-          {/* Render Resolved Games */}
-          {selectedTab === "resolved" &&
-            (loadingResolved ? (
-              <tr>
-                <td colSpan={4} className="text-center">
-                  Loading Resolved Games...
-                </td>
-              </tr>
-            ) : (
-              resolvedData?.gameResolveds.map((game) => (
-                <tr key={game.gameId} className="border-b border-border">
-                  <td className="py-2">{game.gameId}</td>
-                  <td className="py-2">{weiToEther(game.betAmount)}</td>
-                  <td className="py-2">{game.payout}</td>
-                </tr>
-              ))
-            ))}
-        </tbody>
-      </table>
+              {selectedTab === "resolved" &&
+                (loadingResolved ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      Loading resolved games...
+                    </td>
+                  </tr>
+                ) : (
+                  resolvedData?.gameResolveds.map((game) => (
+                    <tr key={game.gameId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium">{game.gameId}</td>
+                      <td className="px-6 py-4">
+                        {weiToEther(game.betAmount)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-green-600 font-medium">
+                          {game.payout}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
