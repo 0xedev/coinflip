@@ -64,7 +64,7 @@ const MyGame = () => {
     GIRTH: "0xa97d71a5fdf906034d9d121ed389665427917ee4",
   };
 
-  const { address } = useAppKitAccount();
+  const  {address}  = useAppKitAccount()
   const [selectedTab, setSelectedTab] = useState<
     "created" | "joined" | "resolved"
   >("created");
@@ -237,7 +237,7 @@ const MyGame = () => {
                   </tr>
                 ) : (
                   createdData?.gameCreateds.map((game) => (
-                    <tr key={game.gameId} className="hover:bg-gray-50">
+                    <tr key={game.gameId} className=" text-black hover:bg-gray-50">
                       <td className="px-6 py-4 font-medium">{game.gameId}</td>
                       <td className="px-6 py-4">
                         {weiToEther(game.betAmount)}
