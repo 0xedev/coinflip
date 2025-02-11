@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
-import { useAppKitAccount } from "@reown/appkit/react";
+
 import { Trophy, Users, Clock, ArrowUpRight } from "lucide-react";
 
 // GraphQL queries remain the same

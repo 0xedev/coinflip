@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@apollo/client";
-import { GET_AVAILABLE_GAMES, GET_GAME_RESOLVED_BY_ID } from "../client/queries";
+import { GET_AVAILABLE_GAMES } from "../client/queries";
 import { CircleDollarSign, XCircle, GamepadIcon } from "lucide-react";
-import { joinGame, resolveGame, claimReward, getGameStatus } from "../../../utils/contractFunction";
+import { joinGame, resolveGame,  getGameStatus } from "../../../utils/contractFunction";
 import client from "../client/apollo-client";
 
 interface Available {
@@ -15,13 +15,7 @@ interface Available {
   tokenSymbol: string;
 }
 
-// Define TypeScript types for the query response
-interface GameResolved {
-  gameId: string;
-  betAmount: string;
-  winner: string;
-  payout: string;
-}
+
 
 interface GameStatus {
   state: number;
@@ -58,6 +52,7 @@ function GameList() {
   const { loading, error, data } = useQuery<{ gameCreateds: Available[] }>(GET_AVAILABLE_GAMES, {
     client,
   });
+  
 
   const [loadingGameId, setLoadingGameId] = useState<number | null>(null);
   const [errorMessage, setError] = useState<string | null>(null);
@@ -138,17 +133,7 @@ function GameList() {
     }
   };
 
-  // Handle claiming a reward
-  const handleClaimReward = async (gameId: string) => {
-    try {
-      console.log(`Claiming reward for game ${gameId}...`);
-      await claimReward(gameId);
-      console.log(`Successfully claimed reward for game ${gameId}`);
-    } catch (err: any) {
-      console.error("Error claiming reward:", err);
-      setError(err instanceof Error ? `Failed to claim reward: ${err.message}` : "Failed to claim reward: An unknown error occurred.");
-    }
-  };
+ 
 
   // Handle page change
   const handlePageChange = (page: number) => {

@@ -7,7 +7,7 @@ import {
   Plus,
   AlertCircle,
   CheckCircle2,
-  Info,
+  
 } from "lucide-react";
 
 import { ethers } from "ethers";
