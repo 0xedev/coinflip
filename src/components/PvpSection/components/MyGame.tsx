@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
-
+import { useAppKitAccount } from "@reown/appkit/react";
 import { Trophy, Users, Clock, ArrowUpRight } from "lucide-react";
 
 // GraphQL queries remain the same
@@ -64,7 +64,7 @@ const MyGame = () => {
     GIRTH: "0xa97d71a5fdf906034d9d121ed389665427917ee4",
   };
 
-  const  address  = '0x2f6160aB362D2C79f3C27D43Ba29eD770250165A'
+  const { address } = useAppKitAccount();
   const [selectedTab, setSelectedTab] = useState<
     "created" | "joined" | "resolved"
   >("created");

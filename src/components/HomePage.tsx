@@ -33,6 +33,9 @@ const HomePage = () => {
               FlipIt
             </h1>
           </div>
+          <div>
+            
+          </div>
         </div>
       </header>
 
